@@ -1,5 +1,5 @@
 import { clearedMfaCookie, mfaTokenFrom, signInError, signedIn } from '@/lib/server/auth';
-import { HttpError, errorResponse, readJson } from '@/lib/server/http';
+import { assertSameOrigin, HttpError, errorResponse, readJson } from '@/lib/server/http';
 import { piezas } from '@/lib/server/piezas';
 
 export const runtime = 'nodejs';
@@ -9,6 +9,7 @@ export const dynamic = 'force-dynamic';
 // Piezas emailed (or from an authenticator app).
 export async function POST(request: Request) {
   try {
+    assertSameOrigin(request);
     const challenge = mfaTokenFrom(request);
     if (!challenge) throw new HttpError(401, 'expired', 'That step took too long. Please sign in again.');
     const body = await readJson(request);

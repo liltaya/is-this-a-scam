@@ -1,5 +1,5 @@
 import { signInError, signedIn } from '@/lib/server/auth';
-import { HttpError, errorResponse, readJson } from '@/lib/server/http';
+import { assertSameOrigin, HttpError, errorResponse, readJson } from '@/lib/server/http';
 import { piezas } from '@/lib/server/piezas';
 
 export const runtime = 'nodejs';
@@ -10,6 +10,7 @@ export const dynamic = 'force-dynamic';
 // the helper straight in.
 export async function POST(request: Request) {
   try {
+    assertSameOrigin(request);
     const body = await readJson(request);
     const token = typeof body.token === 'string' ? body.token.trim() : '';
     if (!token) throw new HttpError(400, 'invalid_input', 'That link is missing a part. Please open it from the email again.');

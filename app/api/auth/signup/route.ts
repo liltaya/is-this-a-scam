@@ -1,5 +1,5 @@
 import { ensureAuthPolicy, requireEmail, requireName, requirePassword, trustedAppUrl } from '@/lib/server/auth';
-import { HttpError, errorResponse, readJson } from '@/lib/server/http';
+import { assertSameOrigin, HttpError, errorResponse, readJson } from '@/lib/server/http';
 import { piezas } from '@/lib/server/piezas';
 
 export const runtime = 'nodejs';
@@ -9,6 +9,7 @@ export const dynamic = 'force-dynamic';
 // their helper creates their account with POST /api/setup/parent.
 export async function POST(request: Request) {
   try {
+    assertSameOrigin(request);
     const body = await readJson(request);
     const name = requireName(body.name, 'your first name');
     const email = requireEmail(body.email);

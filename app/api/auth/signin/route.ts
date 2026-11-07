@@ -7,7 +7,7 @@ import {
   signedIn,
   trustedAppUrl,
 } from '@/lib/server/auth';
-import { HttpError, errorResponse, readJson } from '@/lib/server/http';
+import { assertSameOrigin, HttpError, errorResponse, readJson } from '@/lib/server/http';
 import { piezas } from '@/lib/server/piezas';
 
 export const runtime = 'nodejs';
@@ -17,6 +17,7 @@ export const dynamic = 'force-dynamic';
 // phone, where the helper types the parent's password (R-004).
 export async function POST(request: Request) {
   try {
+    assertSameOrigin(request);
     const body = await readJson(request);
     const email = requireEmail(body.email);
     const password = typeof body.password === 'string' ? body.password : '';

@@ -1,7 +1,7 @@
 import type { Flag } from '@/lib/contracts';
 import { analyze } from '@/lib/server/analyze';
 import { sendCheckAlert } from '@/lib/server/email';
-import { HttpError, errorResponse, readJson, safeErr } from '@/lib/server/http';
+import { assertSameOrigin, HttpError, errorResponse, readJson, safeErr } from '@/lib/server/http';
 import { records } from '@/lib/server/piezas';
 import { requireViewer, withSession } from '@/lib/server/session';
 import { TEXT_KEPT_TAG, findPairFor, flagsJson, toCheck } from '@/lib/server/store';
@@ -26,6 +26,7 @@ function sanitize(maskedText: string, flags: Flag[], risk: string, summary: stri
 // POST /api/checks: parent only. Creates a check and emails the helper.
 export async function POST(request: Request) {
   try {
+    assertSameOrigin(request);
     const viewer = await requireViewer(request);
     const body = await readJson(request);
     const text = body.text;

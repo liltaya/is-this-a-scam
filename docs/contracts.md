@@ -145,7 +145,7 @@ Response `200`: `{ "pair": Pair }`
 
 ### Signed-in requests
 
-The routes read the Piezas session token from `Authorization: Bearer <token>` or the `its_session` cookie. When Piezas extends a session, the response sets a fresh `its_session` cookie. A missing or expired session gets `401` with code `signed_out`. Other codes: `invalid_input` (400), `no_pair` / `not_allowed` (403, create only), `not_found` (404), `already_answered` (409), `server_error` (500).
+The routes read the Piezas session token from `Authorization: Bearer <token>` or the `its_session` cookie. When Piezas extends a session, the response sets a fresh `its_session` cookie. A missing or expired session gets `401` with code `signed_out`. Other codes: `invalid_input` (400), `no_pair` / `not_allowed` (403, create only), `bad_origin` (403, a POST sent from another site), `not_found` (404), `already_answered` (409), `server_error` (500).
 
 ### Setup and sign-in routes
 
@@ -183,7 +183,12 @@ The flow, matching S-001:
 
 Only helpers can sign up (R-001); a parent account exists only through "Add your parent". One helper has one parent in this version.
 
-Error codes: `invalid_input` (400), `invalid_code` (400), `invalid_link` (400), `email_not_verified` (403), `invalid_credentials` (401), `expired` (401, start the sign-in again), `signed_out` (401), `not_allowed` (403), `mfa_required` (403, turn on sign-in codes first), `email_taken` (409), `already_paired` (409), `rate_limited` (429), `server_error` (500).
+Rules for the screens:
+
+- Call these routes with `fetch` from our own pages, sending `Content-Type: application/json`. A POST that a browser sends from any other site, including other apps on apps.piezas.ai, gets `403 bad_origin`. This stops a scam page from signing a parent's phone in to a scammer's account.
+- The confirmation link opens `/helper/verify?token=...` once `PIEZAS_APP_URL` is set on Piezas hosting. Until then it opens the Piezas default page, and the helper signs in afterwards.
+
+Error codes: `invalid_input` (400), `invalid_code` (400), `invalid_link` (400), `email_not_verified` (403), `bad_origin` (403), `invalid_credentials` (401), `expired` (401, start the sign-in again), `signed_out` (401), `not_allowed` (403), `mfa_required` (403, turn on sign-in codes first), `email_taken` (409), `already_paired` (409), `rate_limited` (429), `server_error` (500).
 
 ## Helper alert email (Piezas template `check_alert`)
 
