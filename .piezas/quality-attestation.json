@@ -1,0 +1,65 @@
+{
+  "version": 1,
+  "kind": "quality-scan",
+  "scanId": "046199ae600d",
+  "cycle": "558b3dc71aad",
+  "round": 2,
+  "nonce": "qs-d2b9c1500027380a2e",
+  "packetHash": "d66a4e65258d45806638458f11a076e674df57216477e5f09b1e95c6fad76fa4",
+  "sourceFingerprint": "51d4c1a1a59990559aa567535cb09339861cf3fabd74b712e7448fc27d2c3c0e",
+  "specFingerprint": "ad57e83e1008b7293ed01160018831ad9d480337594bedc1e131f1b2e88c227a",
+  "ranAt": "2026-11-07T21:15:00.534Z",
+  "validUntil": "2026-11-08T21:15:00.534Z",
+  "findings": [
+    {
+      "n": 1,
+      "severity": "high",
+      "plain": "The parent's screens and the helper's review screen still use made-up sample data and never talk to the real app, so a message Galina pastes is not saved, Alex gets no email, Alex's tap on Scam or All good is not recorded, and his answer never reaches Galina's phone.",
+      "file": "app/check/page.tsx",
+      "previous": 1,
+      "key": "44e7a89040f181d187d016f9",
+      "status": "open"
+    },
+    {
+      "n": 2,
+      "severity": "high",
+      "plain": "Helpers still cannot really sign up, set up the second sign-in step, add their parent or sign the parent in for 90 days, because those steps only move between example screens and no account is ever created.",
+      "file": "app/helper/signup/page.tsx",
+      "previous": 2,
+      "key": "18042d770d08f671c0855745",
+      "status": "open"
+    },
+    {
+      "n": 3,
+      "severity": "high",
+      "plain": "The Claude AI is still never asked about any message, so every check gets only the simple keyword rules and is always marked rules-only, even when the AI is working.",
+      "file": "lib/server/analyze.ts",
+      "previous": 3,
+      "key": "9ef33e25955e956f53001a1c",
+      "status": "open"
+    },
+    {
+      "n": 4,
+      "severity": "high",
+      "plain": "Galina's result screen still has example links such as \"Alex says All good\" that show her an \"All good\" answer Alex never gave, plus a preview banner on the screen.",
+      "file": "app/check/[id]/page.tsx",
+      "previous": 4,
+      "key": "4fa6fae79ac396e0df803a25",
+      "status": "open"
+    },
+    {
+      "n": 5,
+      "severity": "medium",
+      "plain": "None of the ten approved scenarios has a real test yet, so nothing proves the app does what was approved.",
+      "file": "tests/scenarios",
+      "previous": 5,
+      "key": "ab68a7298cd993a09ceabfcb",
+      "status": "open"
+    }
+  ],
+  "fixedFromPrevious": {
+    "fixed": 0,
+    "of": 5
+  },
+  "status": "open"
+}
