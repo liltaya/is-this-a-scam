@@ -1,0 +1,56 @@
+{
+  "version": 1,
+  "pending": null,
+  "cycle": {
+    "id": "030dd8a03e97",
+    "startedAt": "2026-11-07T20:36:00.376Z",
+    "rounds": 3,
+    "ended": false,
+    "budgetReported": false
+  },
+  "consentAskedAt": null,
+  "hold": null,
+  "deployWanted": null,
+  "waits": null,
+  "lastStop": {
+    "event": "7cf4d84d41d068377717b9f017d80be4877933fd",
+    "at": "2026-11-07T20:39:58.727Z",
+    "answer": null
+  },
+  "shownList": {
+    "scanId": "ec2b675df623",
+    "items": [
+      {
+        "n": 1,
+        "key": "ba30c9ded0a7f0ed49cc9741",
+        "plain": "The parent's screens still use made-up sample data and never talk to the real app, so a message Galina pastes is not saved, Alex gets no email, and Alex's answer never reaches Galina's phone.",
+        "severity": "high"
+      },
+      {
+        "n": 2,
+        "key": "18042d770d08f671c0855745",
+        "plain": "Helpers still cannot really sign up, set up the second sign-in step, add their parent or sign the parent in for 90 days, because those steps only move between example screens and no account is ever created.",
+        "severity": "high"
+      },
+      {
+        "n": 3,
+        "key": "9ef33e25955e956f53001a1c",
+        "plain": "The Claude AI is still never asked about any message, so every check gets only the simple keyword rules and is always marked rules-only, even when the AI is working.",
+        "severity": "high"
+      },
+      {
+        "n": 4,
+        "key": "4fa6fae79ac396e0df803a25",
+        "plain": "Galina's result screen still has example links such as \"Alex says All good\" that show her an \"All good\" answer Alex never gave, plus a preview banner on the screen.",
+        "severity": "high"
+      },
+      {
+        "n": 5,
+        "key": "ab68a7298cd993a09ceabfcb",
+        "plain": "None of the ten approved scenarios has a real test yet, so nothing proves the app does what was approved.",
+        "severity": "medium"
+      }
+    ]
+  },
+  "deployScanTries": null
+}

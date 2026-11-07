@@ -1,0 +1,65 @@
+{
+  "version": 1,
+  "kind": "quality-scan",
+  "scanId": "ec2b675df623",
+  "cycle": "030dd8a03e97",
+  "round": 3,
+  "nonce": "qs-ff1208eff5411e4b80",
+  "packetHash": "7459fa51834d34c8f75f41d44557224684ac4f5d25d3f70049500a13d0b0ebe4",
+  "sourceFingerprint": "12c0d679a7a273f784dbd5c6aac6fbd3ec56ce4e723738d2d8b848f864941695",
+  "specFingerprint": "5911a9b965040835411ca19096ae0f09e6070de5884b4010e2a1e35f5a7fcc00",
+  "ranAt": "2026-11-07T20:40:29.722Z",
+  "validUntil": "2026-11-08T20:40:29.722Z",
+  "findings": [
+    {
+      "n": 1,
+      "severity": "high",
+      "plain": "The parent's screens still use made-up sample data and never talk to the real app, so a message Galina pastes is not saved, Alex gets no email, and Alex's answer never reaches Galina's phone.",
+      "file": "app/check/page.tsx",
+      "previous": 1,
+      "key": "ba30c9ded0a7f0ed49cc9741",
+      "status": "open"
+    },
+    {
+      "n": 2,
+      "severity": "high",
+      "plain": "Helpers still cannot really sign up, set up the second sign-in step, add their parent or sign the parent in for 90 days, because those steps only move between example screens and no account is ever created.",
+      "file": "app/helper/signup/page.tsx",
+      "previous": 2,
+      "key": "18042d770d08f671c0855745",
+      "status": "open"
+    },
+    {
+      "n": 3,
+      "severity": "high",
+      "plain": "The Claude AI is still never asked about any message, so every check gets only the simple keyword rules and is always marked rules-only, even when the AI is working.",
+      "file": "lib/server/analyze.ts",
+      "previous": 3,
+      "key": "9ef33e25955e956f53001a1c",
+      "status": "open"
+    },
+    {
+      "n": 4,
+      "severity": "high",
+      "plain": "Galina's result screen still has example links such as \"Alex says All good\" that show her an \"All good\" answer Alex never gave, plus a preview banner on the screen.",
+      "file": "app/check/[id]/page.tsx",
+      "previous": 4,
+      "key": "4fa6fae79ac396e0df803a25",
+      "status": "open"
+    },
+    {
+      "n": 5,
+      "severity": "medium",
+      "plain": "None of the ten approved scenarios has a real test yet, so nothing proves the app does what was approved.",
+      "file": "tests/scenarios",
+      "previous": 5,
+      "key": "ab68a7298cd993a09ceabfcb",
+      "status": "open"
+    }
+  ],
+  "fixedFromPrevious": {
+    "fixed": 1,
+    "of": 6
+  },
+  "status": "open"
+}

@@ -1,0 +1,38 @@
+name: Nightly 30-day clean-up
+
+# Piezas has no timed jobs yet, so GitHub starts the clean-up at 3:00 a.m.
+# Vancouver time. Both UTC times are listed so it works in summer and winter;
+# the step skips whichever one is not 3 a.m. in Vancouver. The app route is safe
+# to run twice.
+#
+# Needs two repository settings (Settings -> Secrets and variables -> Actions):
+#   secret   RETENTION_SECRET  same value as the app's RETENTION_SECRET on Piezas hosting
+#   variable APP_URL           e.g. https://is-this-a-scam.apps.piezas.ai
+
+on:
+  schedule:
+    - cron: '0 10 * * *' # 3:00 a.m. Vancouver in summer (PDT)
+    - cron: '0 11 * * *' # 3:00 a.m. Vancouver in winter (PST)
+  workflow_dispatch: {}
+
+jobs:
+  clean-up:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run the clean-up
+        env:
+          RETENTION_SECRET: ${{ secrets.RETENTION_SECRET }}
+          APP_URL: ${{ vars.APP_URL }}
+          MANUAL: ${{ github.event_name == 'workflow_dispatch' }}
+        run: |
+          if [ "$MANUAL" != "true" ] && [ "$(TZ=America/Vancouver date +%H)" != "03" ]; then
+            echo "Not 3 a.m. in Vancouver right now; the other schedule covers today."
+            exit 0
+          fi
+          if [ -z "$RETENTION_SECRET" ] || [ -z "$APP_URL" ]; then
+            echo "::error::RETENTION_SECRET or APP_URL is not set, so old checks are NOT being cleared."
+            exit 1
+          fi
+          curl --fail-with-body -sS -X POST \
+            -H "Authorization: Bearer $RETENTION_SECRET" \
+            "${APP_URL%/}/api/jobs/retention"

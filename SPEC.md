@@ -148,7 +148,7 @@ Then she still gets a red result from the keyword rules, and the check is marked
 - Sign-in for helpers and parents: Piezas users service (email and password, MFA for helpers, 90-day session setting).
 - Pair and Check records: Piezas Entity Records.
 - Helper email: Piezas transactional email.
-- Nightly clean-up: Piezas Workflow schedule (daily at 3:00 a.m., America/Vancouver).
+- Nightly clean-up: Piezas has no timed jobs, so a scheduled GitHub workflow calls the app's protected clean-up route daily at 3:00 a.m. America/Vancouver; reads also clear overdue checks as a backup (chosen by Taya on 2026-11-07).
 - Audit trail of views: Piezas audit events.
 - Claude API call and number masking: the app's own server code (server mode on Piezas hosting).
 

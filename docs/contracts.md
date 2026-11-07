@@ -112,8 +112,10 @@ Rules: `text` required, 1 to 5,000 characters.
 Response `201`:
 
 ```json
-{ "check": { "id": "chk_123", "risk": "red", "helperAnswer": "pending", "...": "full Check" } }
+{ "check": { "id": "chk_123", "risk": "red", "helperAnswer": "pending", "...": "full Check" }, "helperNotified": true }
 ```
+
+`helperNotified` is `false` when the helper email could not be sent (after one retry). The screen should then skip the wait and show the "talk to someone you trust" fallback with the call button right away.
 
 ### `GET /api/checks/:id`
 
@@ -140,6 +142,10 @@ Response `200`: `{ "check": Check }`
 Parent or helper. Returns names and the helper's phone for the call button.
 
 Response `200`: `{ "pair": Pair }`
+
+### Signed-in requests
+
+The routes read the Piezas session token from `Authorization: Bearer <token>` or the `its_session` cookie. When Piezas extends a session, the response sets a fresh `its_session` cookie. A missing or expired session gets `401` with code `signed_out`. Other codes: `invalid_input` (400), `no_pair` / `not_allowed` (403, create only), `not_found` (404), `already_answered` (409), `server_error` (500).
 
 ### Setup routes
 
@@ -171,4 +177,4 @@ Is This a Scam?
 
 ## Retention job (C)
 
-A daily Piezas schedule at 3:00 a.m. Vancouver time clears `maskedText`, blanks each flag's `quote` and `explain`, deletes the screenshot and sets `textClearedAt` on every check older than 30 days. Only `risk`, the flag types and `helperAnswer` stay, for the anonymous counts.
+Piezas has no timed jobs yet, so a scheduled GitHub workflow (`.github/workflows/retention.yml`) calls `POST /api/jobs/retention` (with `Authorization: Bearer $RETENTION_SECRET`; anything else gets 404) every day at 3:00 a.m. Vancouver time. As a backup, `GET /api/checks/:id` clears an overdue check before returning it, so old text never shows even if a night is missed. The job clears `maskedText`, blanks each flag's `quote` and `explain`, deletes the screenshot and sets `textClearedAt` on every check older than 30 days. Only `risk`, the flag types and `helperAnswer` stay, for the anonymous counts.
