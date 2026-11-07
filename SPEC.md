@@ -49,7 +49,7 @@ sees anonymous counts.
 - R-018: If there is no answer after 10 minutes, the parent sees "Don't pay or reply until you talk to someone you trust" with a button to call the helper. Without a helper phone number the button is hidden and the message stays. (confirmed by Taya on 2026-11-06)
 - R-019: A parent can create checks and read only their own checks and pair; a helper can read and answer checks only for their own parent; anyone else gets "not found".
 - R-020: Every view of a check is recorded in the audit trail with who viewed it and when.
-- R-021: Every day at 3:00 a.m. Vancouver time, checks older than 30 days have their masked text, flag quotes and explanations, summary and helper note cleared, and any screenshot deleted, with "text cleared at" set; only the risk, flag types, helper answer and timestamps are kept. (stricter rule from docs/contracts.md, chosen by Taya on 2026-11-07)
+- R-021: Every day at 3:00 a.m. Vancouver time, checks older than 30 days have their masked text, flag quotes and explanations, summary and helper note cleared, and any screenshot deleted, with "text cleared at" set; only the risk, flag types, helper answer and timestamps are kept. (stricter rule from docs/contracts.md, chosen by Taya on 2026-11-07, because the summary and note can repeat personal details)
 
 ## Data
 
