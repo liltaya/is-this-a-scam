@@ -10,9 +10,10 @@ export const isPastRetention = (createdAt: string, now = Date.now()) =>
   now - Date.parse(createdAt) > RETENTION_DAYS * DAY_MS;
 
 /**
- * Clears one check's text: masked text gone, each flag's quote and explanation
- * blanked (types kept), screenshot deleted, textClearedAt set. Risk, summary and
- * helper answer stay (SPEC R-021). Returns the updated record.
+ * Clears one check's text: masked text, summary and helper note gone, each
+ * flag's quote and explanation blanked (types kept), screenshot deleted,
+ * textClearedAt set. Only risk, flag types, helper answer and timestamps stay
+ * (SPEC R-021). Returns the updated record.
  */
 export async function clearCheckText(record: EntityRecord, now = new Date()): Promise<EntityRecord> {
   const { check } = await records();
@@ -29,6 +30,8 @@ export async function clearCheckText(record: EntityRecord, now = new Date()): Pr
     data: {
       ...record.data,
       maskedText: '',
+      summary: '',
+      helperNote: '',
       screenshotFileId: '',
       flagsJson: flagsJson(current.flags.map((f) => ({ ...f, quote: '', explain: '' }))),
       textClearedAt: current.textClearedAt ?? now.toISOString(),
