@@ -1,0 +1,12 @@
+# piezas
+.env
+
+node_modules/
+.next/
+.env*
+!.env.example
+.piezas/dev.log
+*.tsbuildinfo
+test-results/
+playwright-report/
+.DS_Store

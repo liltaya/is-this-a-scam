@@ -1,0 +1,71 @@
+:root {
+  --bg: #fbf8f3;
+  --card: #ffffff;
+  --ink: #1d1b18;
+  --muted: #5c574f;
+  --line: #e4ddd2;
+  --brand: #1f4e79;
+  --brand-ink: #ffffff;
+  --red: #b3261e;
+  --red-bg: #fdecea;
+  --yellow: #8a5a00;
+  --yellow-bg: #fff4d6;
+  --green: #1e6b3a;
+  --green-bg: #e6f4ea;
+  --wait-bg: #eef3f9;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--ink); }
+body {
+  font-family: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 20px;
+  line-height: 1.45;
+}
+main { max-width: 480px; margin: 0 auto; padding: 24px 20px 64px; }
+h1 { font-size: 32px; line-height: 1.2; margin: 8px 0 16px; }
+h2 { font-size: 24px; margin: 24px 0 8px; }
+p { margin: 0 0 12px; }
+.muted { color: var(--muted); }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 20px; margin: 16px 0; }
+.btn {
+  display: block; width: 100%; border: 0; border-radius: 16px; padding: 20px;
+  font: inherit; font-weight: 700; text-align: center; text-decoration: none; cursor: pointer;
+  background: var(--brand); color: var(--brand-ink); margin: 12px 0;
+}
+.btn:focus-visible, textarea:focus-visible, input:focus-visible { outline: 4px solid #f2b705; outline-offset: 2px; }
+.btn.secondary { background: var(--card); color: var(--brand); border: 2px solid var(--brand); }
+.btn.danger { background: var(--red); }
+.btn.ok { background: var(--green); }
+.btn.big { font-size: 34px; padding: 56px 20px; border-radius: 28px; box-shadow: 0 6px 0 #143553; }
+textarea, input {
+  width: 100%; font: inherit; padding: 16px; border-radius: 12px; border: 2px solid var(--line); background: #fff;
+}
+textarea { min-height: 220px; }
+label { display: block; font-weight: 700; margin: 16px 0 6px; }
+.risk { border-radius: 16px; padding: 18px 20px; font-weight: 700; font-size: 24px; margin: 16px 0; }
+.risk.red { background: var(--red-bg); color: var(--red); }
+.risk.yellow { background: var(--yellow-bg); color: var(--yellow); }
+.risk.green { background: var(--green-bg); color: var(--green); }
+.flag { border-left: 6px solid var(--red); padding: 4px 0 4px 14px; margin: 14px 0; }
+.flag.rules { border-color: var(--brand); }
+.flag strong { display: block; }
+.flag q { font-style: italic; }
+.waiting { background: var(--wait-bg); border-radius: 16px; padding: 20px; margin: 20px 0; font-size: 24px; font-weight: 700; display: flex; gap: 14px; align-items: center; }
+.dot { width: 18px; height: 18px; border-radius: 50%; background: var(--brand); animation: pulse 1.4s infinite ease-in-out; flex: none; }
+@keyframes pulse { 0%,100% { opacity: .25 } 50% { opacity: 1 } }
+.answer { border-radius: 24px; padding: 36px 24px; text-align: center; font-size: 34px; font-weight: 800; line-height: 1.2; margin: 24px 0; }
+.answer.scam { background: var(--red); color: #fff; }
+.answer.safe { background: var(--green); color: #fff; }
+.note { font-size: 22px; background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 18px; }
+.fallback { background: var(--yellow-bg); color: #4a3200; border-radius: 24px; padding: 28px 22px; font-size: 28px; font-weight: 800; line-height: 1.25; margin: 24px 0; }
+.message { white-space: pre-wrap; background: #f4f1ec; border-radius: 12px; padding: 16px; font-size: 19px; }
+.steps { color: var(--muted); font-size: 16px; text-transform: uppercase; letter-spacing: .06em; font-weight: 700; }
+.preview-bar {
+  background: #2b2b2b; color: #fff; font-size: 14px; padding: 8px 14px; display: flex; flex-wrap: wrap; gap: 6px 14px; justify-content: center;
+}
+.preview-bar a { color: #ffd76a; }
+.preview-tools { border: 2px dashed #b9b0a3; border-radius: 12px; padding: 12px; margin-top: 32px; font-size: 15px; color: var(--muted); }
+.preview-tools a { color: var(--brand); margin-right: 12px; }
+.list-row { display: flex; justify-content: space-between; gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); font-size: 18px; }
+.err { color: var(--red); font-weight: 700; }
+.masked-note { font-size: 16px; color: var(--green); font-weight: 700; margin-top: 8px; }
