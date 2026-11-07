@@ -51,10 +51,10 @@ interface Check {
   screenshotFileId: string | null;  // stretch; deleted after analysis
   risk: Risk;
   flags: Flag[];
-  summary: string;                  // one sentence a 75-year-old understands
+  summary: string;                  // one sentence a 75-year-old understands; "" once cleared after 30 days
   engine: "rules+ai" | "rules-only";
   helperAnswer: HelperAnswer;       // starts "pending"
-  helperNote: string | null;        // optional, max 200 characters
+  helperNote: string | null;        // optional, max 200 characters; null once cleared after 30 days
   createdAt: string;
   answeredAt: string | null;
   textClearedAt: string | null;
@@ -177,4 +177,4 @@ Is This a Scam?
 
 ## Retention job (C)
 
-Piezas has no timed jobs yet, so a scheduled GitHub workflow (`.github/workflows/retention.yml`) calls `POST /api/jobs/retention` (with `Authorization: Bearer $RETENTION_SECRET`; anything else gets 404) every day at 3:00 a.m. Vancouver time. As a backup, `GET /api/checks/:id` clears an overdue check before returning it, so old text never shows even if a night is missed. The job clears `maskedText`, blanks each flag's `quote` and `explain`, deletes the screenshot and sets `textClearedAt` on every check older than 30 days. Only `risk`, the flag types and `helperAnswer` stay, for the anonymous counts.
+Piezas has no timed jobs yet, so a scheduled GitHub workflow (`.github/workflows/retention.yml`) calls `POST /api/jobs/retention` (with `Authorization: Bearer $RETENTION_SECRET`; anything else gets 404) every day at 3:00 a.m. Vancouver time. As a backup, `GET /api/checks/:id` clears an overdue check before returning it, so old text never shows even if a night is missed. On every check older than 30 days the job clears `maskedText` (to `null`), blanks each flag's `quote` and `explain`, clears `summary` (to `""`) and `helperNote` (to `null`), deletes the screenshot and sets `textClearedAt`. Only `risk`, the flag types, `helperAnswer` and the timestamps (`createdAt`, `answeredAt`, `textClearedAt`) stay, for the anonymous counts. Screens should show a plain "This message was cleared after 30 days" when `textClearedAt` is set.

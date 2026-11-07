@@ -1,23 +1,23 @@
 {
   "version": 1,
   "kind": "quality-scan",
-  "scanId": "ec2b675df623",
-  "cycle": "030dd8a03e97",
-  "round": 3,
-  "nonce": "qs-ff1208eff5411e4b80",
-  "packetHash": "7459fa51834d34c8f75f41d44557224684ac4f5d25d3f70049500a13d0b0ebe4",
-  "sourceFingerprint": "12c0d679a7a273f784dbd5c6aac6fbd3ec56ce4e723738d2d8b848f864941695",
-  "specFingerprint": "5911a9b965040835411ca19096ae0f09e6070de5884b4010e2a1e35f5a7fcc00",
-  "ranAt": "2026-11-07T20:40:29.722Z",
-  "validUntil": "2026-11-08T20:40:29.722Z",
+  "scanId": "046199ae600d",
+  "cycle": "558b3dc71aad",
+  "round": 2,
+  "nonce": "qs-d2b9c1500027380a2e",
+  "packetHash": "d66a4e65258d45806638458f11a076e674df57216477e5f09b1e95c6fad76fa4",
+  "sourceFingerprint": "51d4c1a1a59990559aa567535cb09339861cf3fabd74b712e7448fc27d2c3c0e",
+  "specFingerprint": "ad57e83e1008b7293ed01160018831ad9d480337594bedc1e131f1b2e88c227a",
+  "ranAt": "2026-11-07T21:15:00.534Z",
+  "validUntil": "2026-11-08T21:15:00.534Z",
   "findings": [
     {
       "n": 1,
       "severity": "high",
-      "plain": "The parent's screens still use made-up sample data and never talk to the real app, so a message Galina pastes is not saved, Alex gets no email, and Alex's answer never reaches Galina's phone.",
+      "plain": "The parent's screens and the helper's review screen still use made-up sample data and never talk to the real app, so a message Galina pastes is not saved, Alex gets no email, Alex's tap on Scam or All good is not recorded, and his answer never reaches Galina's phone.",
       "file": "app/check/page.tsx",
       "previous": 1,
-      "key": "ba30c9ded0a7f0ed49cc9741",
+      "key": "44e7a89040f181d187d016f9",
       "status": "open"
     },
     {
@@ -58,8 +58,8 @@
     }
   ],
   "fixedFromPrevious": {
-    "fixed": 1,
-    "of": 6
+    "fixed": 0,
+    "of": 5
   },
   "status": "open"
 }

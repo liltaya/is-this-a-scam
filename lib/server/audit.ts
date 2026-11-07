@@ -1,5 +1,6 @@
 import 'server-only';
 import { piezas } from './piezas';
+import { safeErr } from './http';
 import type { Viewer } from './session';
 
 // R-020: every view of a check goes in the Piezas audit trail. The parent's
@@ -27,6 +28,6 @@ export async function recordCheckView(viewer: Viewer, checkId: string, role: str
     });
   } catch (err) {
     recent.delete(key); // try again on the next view
-    console.error('[audit] could not record check view', err);
+    console.error('[audit] could not record check view', checkId, safeErr(err));
   }
 }

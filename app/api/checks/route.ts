@@ -1,7 +1,7 @@
 import type { Flag } from '@/lib/contracts';
 import { analyze } from '@/lib/server/analyze';
 import { sendCheckAlert } from '@/lib/server/email';
-import { HttpError, errorResponse, readJson } from '@/lib/server/http';
+import { HttpError, errorResponse, readJson, safeErr } from '@/lib/server/http';
 import { records } from '@/lib/server/piezas';
 import { requireViewer, withSession } from '@/lib/server/session';
 import { TEXT_KEPT_TAG, findPairFor, flagsJson, toCheck } from '@/lib/server/store';
@@ -74,13 +74,13 @@ export async function POST(request: Request) {
         await sendCheckAlert(request, mine.pair, created);
         helperNotified = true;
       } catch (err) {
-        console.error(`[checks] helper email failed (attempt ${attempt})`, created.id, err);
+        console.error(`[checks] helper email failed (attempt ${attempt})`, created.id, safeErr(err));
       }
     }
     if (!helperNotified) {
       await check
         .logActivity(created.id, { type: 'note', content: { text: 'Helper alert email could not be sent.' } })
-        .catch((err: unknown) => console.error('[checks] could not log email failure', err));
+        .catch((err: unknown) => console.error('[checks] could not log email failure', created.id, safeErr(err)));
     }
 
     return withSession(viewer, Response.json({ check: created, helperNotified }, { status: 201 }));

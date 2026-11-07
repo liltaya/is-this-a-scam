@@ -2,9 +2,9 @@
   "version": 1,
   "pending": null,
   "cycle": {
-    "id": "030dd8a03e97",
-    "startedAt": "2026-11-07T20:36:00.376Z",
-    "rounds": 3,
+    "id": "558b3dc71aad",
+    "startedAt": "2026-11-07T21:13:02.019Z",
+    "rounds": 2,
     "ended": false,
     "budgetReported": false
   },
@@ -13,17 +13,17 @@
   "deployWanted": null,
   "waits": null,
   "lastStop": {
-    "event": "7cf4d84d41d068377717b9f017d80be4877933fd",
-    "at": "2026-11-07T20:39:58.727Z",
+    "event": "11d2ea7d36dd3bf956fe807888108c605616078e",
+    "at": "2026-11-07T21:14:18.114Z",
     "answer": null
   },
   "shownList": {
-    "scanId": "ec2b675df623",
+    "scanId": "046199ae600d",
     "items": [
       {
         "n": 1,
-        "key": "ba30c9ded0a7f0ed49cc9741",
-        "plain": "The parent's screens still use made-up sample data and never talk to the real app, so a message Galina pastes is not saved, Alex gets no email, and Alex's answer never reaches Galina's phone.",
+        "key": "44e7a89040f181d187d016f9",
+        "plain": "The parent's screens and the helper's review screen still use made-up sample data and never talk to the real app, so a message Galina pastes is not saved, Alex gets no email, Alex's tap on Scam or All good is not recorded, and his answer never reaches Galina's phone.",
         "severity": "high"
       },
       {

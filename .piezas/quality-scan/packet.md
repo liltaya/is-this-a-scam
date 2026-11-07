@@ -1,7 +1,7 @@
 # Piezas quality scan packet
 
-Scan code: qs-ff1208eff5411e4b80
-Round: 3 of 3
+Scan code: qs-d2b9c1500027380a2e
+Round: 2 of 3
 Project folder: /Users/tayamamenko/Developer/is-this-a-scam
 
 ## The app description (what the owner approved)
@@ -57,7 +57,7 @@ sees anonymous counts.
 - R-018: If there is no answer after 10 minutes, the parent sees "Don't pay or reply until you talk to someone you trust" with a button to call the helper. Without a helper phone number the button is hidden and the message stays. (confirmed by Taya on 2026-11-06)
 - R-019: A parent can create checks and read only their own checks and pair; a helper can read and answer checks only for their own parent; anyone else gets "not found".
 - R-020: Every view of a check is recorded in the audit trail with who viewed it and when.
-- R-021: Every day at 3:00 a.m. Vancouver time, checks older than 30 days have their masked text cleared, flag quotes and explanations blanked, and any screenshot deleted, with "text cleared at" set; risk, summary and helper answer are kept.
+- R-021: Every day at 3:00 a.m. Vancouver time, checks older than 30 days have their masked text, flag quotes and explanations, summary and helper note cleared, and any screenshot deleted, with "text cleared at" set; only the risk, flag types, helper answer and timestamps are kept. (stricter rule from docs/contracts.md, chosen by Taya on 2026-11-07)
 
 ## Data
 
@@ -133,9 +133,9 @@ Then she sees "Don't pay or reply until you talk to someone you trust" and a but
 ### S-008: Old checks are cleared at night
 
 covers: R-021
-Given a check older than 30 days with risk red and helper answer scam
+Given a check older than 30 days with risk red, a flag of type gift cards, helper answer scam and a helper note
 When the nightly 3:00 a.m. Vancouver clean-up runs
-Then its masked text and flag quotes and explanations are blank, "text cleared at" is set, and its risk and helper answer are unchanged
+Then its masked text, flag quotes and explanations, summary and helper note are blank, "text cleared at" is set, and its risk, flag types, helper answer and timestamps are unchanged
 
 ### S-009: A normal message is never called safe by the app
 
@@ -235,39 +235,271 @@ No test run is recorded yet (`piezas test` has not run).
 
 ## Problems from the previous scan: check each one again
 
-1. [high] The parent's screens still use made-up sample data and never talk to the real app, so a message Galina pastes is not saved, Alex gets no email, and Alex's answer never reaches Galina's phone. (app/check/page.tsx)
+1. [high] The parent's screens and the helper's review screen still use made-up sample data and never talk to the real app, so a message Galina pastes is not saved, Alex gets no email, Alex's tap on Scam or All good is not recorded, and his answer never reaches Galina's phone. (app/check/page.tsx)
 2. [high] Helpers still cannot really sign up, set up the second sign-in step, add their parent or sign the parent in for 90 days, because those steps only move between example screens and no account is ever created. (app/helper/signup/page.tsx)
 3. [high] The Claude AI is still never asked about any message, so every check gets only the simple keyword rules and is always marked rules-only, even when the AI is working. (lib/server/analyze.ts)
 4. [high] Galina's result screen still has example links such as "Alex says All good" that show her an "All good" answer Alex never gave, plus a preview banner on the screen. (app/check/[id]/page.tsx)
 5. [medium] None of the ten approved scenarios has a real test yet, so nothing proves the app does what was approved. (tests/scenarios)
-6. [medium] A verification code written with a space or dash in the middle, such as 123-456 or 123 456, is left fully visible instead of being hidden. (lib/mask.ts)
 
 ## The change
 
-Changed since the last scan (2026-11-07T20:39:31.819Z): 1 file(s) added or changed, 0 removed.
+Changed since the last scan (2026-11-07T21:13:49.796Z): 4 file(s) added or changed, 0 removed.
 
-### changed: lib/mask.ts
+### changed: app/api/checks/route.ts
 
 ````
-// Hides card, account and verification numbers, keeping only the last four digits.
-// A 16-digit card number becomes "**** " plus its last four digits. Codes of 4 to 8 digits become "****".
-// Amounts with a $ sign are left alone. A 4-digit year is kept only inside a date
-// ("Nov 7, 2024", "2024-11-07", "11/07/2024"); a bare "2019" could be a code, so it is hidden.
-const MONTH_BEFORE = /\b(jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\.?(\s+\d{1,2}(st|nd|rd|th)?,?)?\s+$/i;
-function isDateYear(text: string, start: number, len: number): boolean {
-  const before = text.slice(Math.max(0, start - 20), start);
-  const after = text.slice(start + len, start + len + 6);
-  return MONTH_BEFORE.test(before) || /\d{1,2}[/-]\d{1,2}[/-]$/.test(before) || /^[/-]\d{1,2}[/-]\d{1,2}/.test(after);
+import type { Flag } from '@/lib/contracts';
+import { analyze } from '@/lib/server/analyze';
+import { sendCheckAlert } from '@/lib/server/email';
+import { HttpError, errorResponse, readJson, safeErr } from '@/lib/server/http';
+import { records } from '@/lib/server/piezas';
+import { requireViewer, withSession } from '@/lib/server/session';
+import { TEXT_KEPT_TAG, findPairFor, flagsJson, toCheck } from '@/lib/server/store';
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
+const MAX_TEXT = 5000;
+
+// The contract's rules for analyze(), enforced again here so a bad engine
+// result can't break the screens or call a message safe.
+function sanitize(maskedText: string, flags: Flag[], risk: string, summary: string) {
+  const kept = flags.filter((f) => f.quote && maskedText.includes(f.quote)).slice(0, 4);
+  const safeRisk = risk === 'red' || risk === 'yellow' ? risk : 'green';
+  const cleanSummary =
+    safeRisk === 'green' && /\bsafe\b/i.test(summary)
+      ? 'We found no obvious warning signs, but wait for your helper before you act.'
+      : summary;
+  return { flags: kept, risk: safeRisk as 'red' | 'yellow' | 'green', summary: cleanSummary };
 }
-export function maskNumbers(text: string): string {
-  const kept: string[] = [];
-  const hold = (s: string) => `\u0000${kept.push(s) - 1}\u0000`;
-  let out = text.replace(/\$\s?[\d,]+(\.\d{2})?/g, hold); // money amounts
-  out = out.replace(/\b(?:\d[ -]?){8,19}\d\b/g, (m) => hold(`**** ${m.replace(/\D/g, '').slice(-4)}`));
-  // Codes split by a dash or space, like 123-456 or 1234 5678 (dates like 2024-11-07 have 2-digit parts).
-  out = out.replace(/\b\d{3,4}[ -]\d{3,4}\b/g, () => hold('****'));
-  out = out.replace(/\b\d{4,8}\b/g, (m, offset: number, whole: string) =>
-    /^(19|20)\d{2}$/.test(m) && isDateYear(whole, offset, m.length) ? m : '****');
-  return out.replace(/\u0000(\d+)\u0000/g, (_, i) => kept[Number(i)]);
+
+// POST /api/checks: parent only. Creates a check and emails the helper.
+export async function POST(request: Request) {
+  try {
+    const viewer = await requireViewer(request);
+    const body = await readJson(request);
+    const text = body.text;
+    if (typeof text !== 'string' || text.trim().length === 0) {
+      throw new HttpError(400, 'invalid_input', 'Please paste the message first.');
+    }
+    if (text.length > MAX_TEXT) {
+      throw new HttpError(400, 'invalid_input', 'That message is too long. Please paste a shorter part of it.');
+    }
+
+    const mine = await findPairFor(viewer);
+    if (!mine) throw new HttpError(403, 'no_pair', 'Your helper has not finished setting up your account yet.');
+    if (mine.role !== 'parent') throw new HttpError(403, 'not_allowed', 'Only the parent can check a message.');
+
+    // Raw text goes only into analyze(); everything stored below is masked.
+    const result = await analyze({ text });
+    const clean = sanitize(result.maskedText, result.flags, result.risk, result.summary);
+
+    const { check } = await records();
+    const record = await check.create({
+      title: `Check ${new Date().toISOString()}`,
+      tags: [TEXT_KEPT_TAG],
+      data: {
+        pairId: mine.pair.id,
+        parentUserId: viewer.userId,
+        maskedText: result.maskedText,
+        screenshotFileId: '',
+        risk: clean.risk,
+        flagsJson: flagsJson(clean.flags),
+        summary: clean.summary,
+        engine: result.engine === 'rules+ai' ? 'rules+ai' : 'rules-only',
+        helperAnswer: 'pending',
+        helperNote: '',
+        answeredAt: '',
+        textClearedAt: '',
+      },
+    });
+    const created = toCheck(record);
+
+    // The check is saved either way; a failed email must not lose it. Try twice,
+    // then tell the screen (helperNotified: false) so it can show the call button
+    // straight away, and note it on the check's timeline.
+    let helperNotified = false;
+    for (let attempt = 1; attempt <= 2 && !helperNotified; attempt++) {
+      try {
+        await sendCheckAlert(request, mine.pair, created);
+        helperNotified = true;
+      } catch (err) {
+        console.error(`[checks] helper email failed (attempt ${attempt})`, created.id, safeErr(err));
+      }
+    }
+    if (!helperNotified) {
+      await check
+        .logActivity(created.id, { type: 'note', content: { text: 'Helper alert email could not be sent.' } })
+        .catch((err: unknown) => console.error('[checks] could not log email failure', created.id, safeErr(err)));
+    }
+
+    return withSession(viewer, Response.json({ check: created, helperNotified }, { status: 201 }));
+  } catch (err) {
+    return errorResponse(err);
+  }
+}
+````
+
+### changed: lib/server/audit.ts
+
+````
+import 'server-only';
+import { piezas } from './piezas';
+import { safeErr } from './http';
+import type { Viewer } from './session';
+
+// R-020: every view of a check goes in the Piezas audit trail. The parent's
+// waiting screen polls every 3 seconds, so repeat views by the same person
+// within a minute are folded into one event (best effort, per server process).
+const recent = new Map<string, number>();
+const FOLD_MS = 60_000;
+
+export async function recordCheckView(viewer: Viewer, checkId: string, role: string): Promise<void> {
+  const key = `${viewer.userId}:${checkId}`;
+  const now = Date.now();
+  if (now - (recent.get(key) ?? 0) < FOLD_MS) return;
+  recent.set(key, now);
+  if (recent.size > 5000) {
+    for (const [k, t] of recent) if (now - t >= FOLD_MS) recent.delete(k);
+  }
+  try {
+    await piezas().admin.createAuditEvent(viewer.tenantId, {
+      actorId: viewer.userId,
+      actorType: 'app_user',
+      action: 'check.viewed',
+      resourceType: 'check',
+      resourceId: checkId,
+      metadata: { role },
+    });
+  } catch (err) {
+    recent.delete(key); // try again on the next view
+    console.error('[audit] could not record check view', checkId, safeErr(err));
+  }
+}
+````
+
+### changed: lib/server/http.ts
+
+````
+import 'server-only';
+import type { ApiError } from '@/lib/contracts';
+
+export class HttpError extends Error {
+  constructor(public status: number, public code: string, message: string) {
+    super(message);
+  }
+}
+
+export const notFound = () =>
+  new HttpError(404, 'not_found', "We couldn't find that check.");
+
+/**
+ * What may be logged about an error: its kind and code only. Error messages
+ * from services can echo the request (and so message text), so they are never logged.
+ */
+export function safeErr(err: unknown): { name: string; code?: string; service?: string; operation?: string } {
+  const e = err as { name?: unknown; code?: unknown; service?: unknown; operation?: unknown } | null;
+  const s = (v: unknown) => (typeof v === 'string' ? v : undefined);
+  return { name: s(e?.name) ?? typeof err, code: s(e?.code), service: s(e?.service), operation: s(e?.operation) };
+}
+
+export function errorResponse(err: unknown): Response {
+  if (err instanceof HttpError) {
+    const body: ApiError = { error: { code: err.code, message: err.message } };
+    return Response.json(body, { status: err.status });
+  }
+  console.error('[api] unexpected error', safeErr(err));
+  const body: ApiError = {
+    error: { code: 'server_error', message: 'Something went wrong on our side. Please try again.' },
+  };
+  return Response.json(body, { status: 500 });
+}
+
+export async function readJson(request: Request): Promise<Record<string, unknown>> {
+  try {
+    const body = await request.json();
+    if (body && typeof body === 'object' && !Array.isArray(body)) return body as Record<string, unknown>;
+  } catch {}
+  throw new HttpError(400, 'invalid_input', 'That request was not readable. Please try again.');
+}
+````
+
+### changed: lib/server/retention.ts
+
+````
+import 'server-only';
+import type { EntityRecord } from '@piezas/sdk';
+import { records, piezas } from './piezas';
+import { safeErr } from './http';
+import { TEXT_KEPT_TAG, flagsJson, toCheck } from './store';
+
+export const RETENTION_DAYS = 30;
+const DAY_MS = 24 * 3600 * 1000;
+
+export const isPastRetention = (createdAt: string, now = Date.now()) =>
+  now - Date.parse(createdAt) > RETENTION_DAYS * DAY_MS;
+
+/**
+ * Clears one check's text (docs/contracts.md, SPEC R-021): masked text, each
+ * flag's quote and explanation, the summary and the helper note are blanked and
+ * the screenshot deleted; textClearedAt is set. Only the risk, flag types,
+ * helper answer and timestamps stay. Returns the updated record.
+ */
+export async function clearCheckText(record: EntityRecord, now = new Date()): Promise<EntityRecord> {
+  const { check } = await records();
+  const current = toCheck(record);
+  if (current.screenshotFileId) {
+    try {
+      await piezas().documents.deleteDocument(current.screenshotFileId);
+    } catch (err) {
+      console.error('[retention] could not delete screenshot', current.id, safeErr(err));
+      throw err; // keep the tag so tomorrow's run tries again
+    }
+  }
+  return check.update(record.id, {
+    data: {
+      ...record.data,
+      maskedText: '',
+      screenshotFileId: '',
+      flagsJson: flagsJson(current.flags.map((f) => ({ ...f, quote: '', explain: '' }))),
+      summary: '',
+      helperNote: '',
+      textClearedAt: current.textClearedAt ?? now.toISOString(),
+    },
+    tags: record.tags.filter((t) => t !== TEXT_KEPT_TAG),
+  });
+}
+
+/** Used on every read, so an overdue check never shows its text even if a nightly run was missed. */
+export async function clearIfOverdue(record: EntityRecord): Promise<EntityRecord> {
+  if (record.tags.includes(TEXT_KEPT_TAG) && isPastRetention(record.createdAt)) {
+    return clearCheckText(record);
+  }
+  return record;
+}
+
+/** The nightly job: clears every check older than 30 days that still has its text. */
+export async function runRetention(now = new Date()): Promise<{ cleared: number; failed: number }> {
+  const { check } = await records();
+  let cleared = 0;
+  let failed = 0;
+  const PAGE = 100;
+  for (;;) {
+    // Oldest first, only checks that still have text. Cleared ones drop out of
+    // this list, so we always read from the start.
+    const page = await check.list({ tag: TEXT_KEPT_TAG, sort: 'created_at', order: 'asc', limit: PAGE, offset: failed });
+    const due = page.data.filter((r) => isPastRetention(r.createdAt, now.getTime()));
+    for (const r of due) {
+      try {
+        await clearCheckText(r, now);
+        cleared++;
+      } catch {
+        failed++;
+      }
+    }
+    // Stop once a page has anything newer than 30 days, or the list ran out.
+    if (due.length < page.data.length || page.data.length < PAGE || due.length === 0) break;
+  }
+  return { cleared, failed };
 }
 ````

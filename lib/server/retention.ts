@@ -1,6 +1,7 @@
 import 'server-only';
 import type { EntityRecord } from '@piezas/sdk';
 import { records, piezas } from './piezas';
+import { safeErr } from './http';
 import { TEXT_KEPT_TAG, flagsJson, toCheck } from './store';
 
 export const RETENTION_DAYS = 30;
@@ -10,9 +11,10 @@ export const isPastRetention = (createdAt: string, now = Date.now()) =>
   now - Date.parse(createdAt) > RETENTION_DAYS * DAY_MS;
 
 /**
- * Clears one check's text: masked text gone, each flag's quote and explanation
- * blanked (types kept), screenshot deleted, textClearedAt set. Risk, summary and
- * helper answer stay (SPEC R-021). Returns the updated record.
+ * Clears one check's text (docs/contracts.md, SPEC R-021): masked text, each
+ * flag's quote and explanation, the summary and the helper note are blanked and
+ * the screenshot deleted; textClearedAt is set. Only the risk, flag types,
+ * helper answer and timestamps stay. Returns the updated record.
  */
 export async function clearCheckText(record: EntityRecord, now = new Date()): Promise<EntityRecord> {
   const { check } = await records();
@@ -21,7 +23,7 @@ export async function clearCheckText(record: EntityRecord, now = new Date()): Pr
     try {
       await piezas().documents.deleteDocument(current.screenshotFileId);
     } catch (err) {
-      console.error('[retention] could not delete screenshot', current.id, err);
+      console.error('[retention] could not delete screenshot', current.id, safeErr(err));
       throw err; // keep the tag so tomorrow's run tries again
     }
   }
@@ -31,6 +33,8 @@ export async function clearCheckText(record: EntityRecord, now = new Date()): Pr
       maskedText: '',
       screenshotFileId: '',
       flagsJson: flagsJson(current.flags.map((f) => ({ ...f, quote: '', explain: '' }))),
+      summary: '',
+      helperNote: '',
       textClearedAt: current.textClearedAt ?? now.toISOString(),
     },
     tags: record.tags.filter((t) => t !== TEXT_KEPT_TAG),
