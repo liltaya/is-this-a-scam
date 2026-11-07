@@ -82,3 +82,7 @@ A quality scan is a separate check of the work against what the owner approved, 
 - `npx piezas quality-scan on | off | before-publishing | accept …` records the owner's choice; never run it on your own. Only in a tool without the Piezas checks, relay their exact words with `--owner-reply "<their words>"`.
 - Only the owner accepts a problem ("accept 2", "accept all"). Say "quality scan" to the owner, never "review" or "audit".
 <!-- PIEZAS-CONTEXT:END -->
+
+## Team rules
+
+@docs/team-rules.md
