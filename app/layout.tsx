@@ -9,11 +9,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <body>
-        <nav className="preview-bar" aria-label="Design preview">
-          <span>Design preview with sample data.</span>
-          <a href="/">Galina&apos;s screens</a>
-          <a href="/helper/signup">Alex&apos;s screens</a>
-        </nav>
         {children}
         <ReportProblem />
       </body>
