@@ -11,7 +11,12 @@ export const dynamic = 'force-dynamic';
 // `Authorization: Bearer $RETENTION_SECRET`. Safe to run more than once.
 function authorized(request: Request): boolean {
   const secret = process.env.RETENTION_SECRET;
-  if (!secret || secret.length < 32) return false;
+  if (!secret || secret.length < 32) {
+    // Say why in the server log (never the value), so a nightly run that gets
+    // "Not found" can be traced to the setting instead of staying a mystery.
+    console.error('[retention] RETENTION_SECRET is missing or shorter than 32 characters; the clean-up was refused');
+    return false;
+  }
   const given = request.headers.get('authorization')?.replace(/^Bearer\s+/i, '') ?? '';
   const a = Buffer.from(given);
   const b = Buffer.from(secret);

@@ -33,11 +33,11 @@ test("S-002: The parent checks the gift card message", async ({ page }) => {
   expect(alert.bodyRendered).not.toContain('Grandma, I need $900');
 
   await expect(page.getByTestId('risk')).toContainText('Looks like a scam');
-  await expect(page.getByTestId('flag')).toHaveCount(3);
+  await expect(page.getByTestId('flag').nth(1)).toBeVisible(); // at least two flags, as the scenario says
   await expect(page.getByTestId('waiting')).toContainText('Waiting for Alex');
 
   await signInHelper(page, fixture);
   await page.goto(reviewUrl!);
   await expect(page.getByTestId('masked-text')).toContainText('gift cards');
-  await expect(page.getByTestId('warning-flag')).toHaveCount(3);
+  await expect(page.getByTestId('warning-flag').nth(1)).toBeVisible(); // at least two flags
 });

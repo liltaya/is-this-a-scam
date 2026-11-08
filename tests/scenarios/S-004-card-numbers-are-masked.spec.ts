@@ -41,6 +41,7 @@ test("S-004: Card numbers are masked", async ({ page }) => {
   await page.getByTestId('submit-check').click();
   const created = await createdResponse;
   expect(created.ok()).toBeTruthy();
+  await page.waitForURL(/\/check\/[^/?#]+(?:[?#].*)?$/);
   const id = new URL(page.url()).pathname.split('/').at(-1)!;
 
   await expect(page.getByTestId('masked-text')).toContainText('**** 1111');

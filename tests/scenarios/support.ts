@@ -136,8 +136,7 @@ export async function createScenarioFixture(options: {
       engine: 'rules-only',
       helperAnswer,
       helperNote: options.helperNote ?? '',
-      answeredAt: helperAnswer === 'pending' ? '' : createdAt,
-      textClearedAt: '',
+      ...(helperAnswer === 'pending' ? {} : { answeredAt: createdAt }),
     },
   });
 
@@ -199,8 +198,7 @@ export async function createCheckForFixture(fixture: ScenarioFixture, options: {
       engine: options.engine ?? 'rules-only',
       helperAnswer,
       helperNote: '',
-      answeredAt,
-      textClearedAt: '',
+      ...(answeredAt ? { answeredAt } : {}),
     },
   });
   return {
