@@ -1,4 +1,4 @@
-import { HttpError, errorResponse, notFound, readJson } from '@/lib/server/http';
+import { assertSameOrigin, HttpError, errorResponse, notFound, readJson } from '@/lib/server/http';
 import { records } from '@/lib/server/piezas';
 import { requireViewer, withSession } from '@/lib/server/session';
 import { loadCheckFor, toCheck } from '@/lib/server/store';
@@ -13,6 +13,7 @@ const alreadyAnswered = () => new HttpError(409, 'already_answered', 'You alread
 // POST /api/checks/:id/answer: helper of the pair only, once.
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
+    assertSameOrigin(request);
     const viewer = await requireViewer(request);
     const { id } = await params;
     const body = await readJson(request);

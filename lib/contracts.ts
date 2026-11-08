@@ -53,6 +53,22 @@ export interface AnalyzeResult {
   engine: 'rules+ai' | 'rules-only';
 }
 
+/** Returned by every sign-in step and by GET /api/auth/me, so screens know where to go next. */
+export interface AuthStatus {
+  status: 'signed_in';
+  role: Role | null;
+  mfaEnabled: boolean;
+  /** A helper must turn on sign-in codes before adding a parent (R-002). */
+  needsMfaSetup: boolean;
+  pair: Pair | null;
+}
+
+/** Returned by POST /api/auth/signin when a code is needed. The challenge itself stays in a server-only cookie. */
+export interface MfaRequired {
+  status: 'mfa_required';
+  factors: Array<'totp' | 'email'>;
+}
+
 export interface ApiError {
   error: { code: string; message: string };
 }
