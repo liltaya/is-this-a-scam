@@ -8,7 +8,7 @@ export class HttpError extends Error {
 }
 
 export const notFound = () =>
-  new HttpError(404, 'not_found', "We couldn't find that check.");
+  new HttpError(404, 'not_found', 'This check was not found. It may belong to someone else.');
 
 /**
  * What may be logged about an error: its kind and code only. Error messages

@@ -126,7 +126,8 @@
       "PIEZAS_USERS_URL",
       "ANTHROPIC_API_KEY",
       "PIEZAS_HOOK_STATE_DIR",
-      "PIEZAS_TEST_RUN"
+      "PIEZAS_TEST_RUN",
+      "PIEZAS_RECORD_PREFIX"
     ]
   },
   "recipes": [],

@@ -83,6 +83,7 @@ export default function AddParent() {
   }
 
   const setupHref = `/setup?name=${encodeURIComponent(parentName.trim())}`;
+  const setupAddress = typeof window === 'undefined' ? setupHref : `${window.location.host}${setupHref}`;
 
   return (
     <main className={styles.page}>
@@ -152,8 +153,7 @@ export default function AddParent() {
               <div className={styles.notice}>
                 <strong>On your parent’s phone</strong>
                 <ol className={styles.stepsList}>
-                  <li>Open the Is This a Scam? website.</li>
-                  <li>Tap “I’m setting this up for my parent.”</li>
+                  <li>Open <strong data-testid="parent-setup-address">{setupAddress}</strong> in their browser. Or open the Is This a Scam? website and tap “Set up this phone for my parent.”</li>
                   <li>Enter their email and the password below.</li>
                   <li>Add the page to their home screen.</li>
                 </ol>
@@ -167,7 +167,8 @@ export default function AddParent() {
                 <p className={styles.hint}>Keep this private. Your parent won’t need to know it.</p>
               </div>
               <div className={styles.notice}>Their sign-in will stay active for 90 days.</div>
-              <a href={setupHref} target="_blank" rel="noreferrer" className={styles.primaryButton} data-testid="see-parent-signin">Open setup on your parent’s phone</a>
+              <a href={setupHref} target="_blank" rel="noreferrer" className={styles.secondaryButton} data-testid="see-parent-signin">Open the parent sign-in page here</a>
+              <p className={styles.hint}>Only use the button above on your parent’s phone. Signing them in on this device signs you out of your helper account.</p>
               <button className={styles.secondaryButton} onClick={() => setStep('done')} data-testid="parent-signed-in">Their phone is ready</button>
             </>
           )}

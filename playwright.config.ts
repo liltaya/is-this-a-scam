@@ -30,7 +30,9 @@ export default defineConfig({
         timeout: 120_000,
     env: {
       PIEZAS_API_KEY: process.env.PIEZAS_TEST_API_KEY ?? '',
-      PIEZAS_TEST_RUN: process.env.PIEZAS_TEST_RUN ?? '',
+      PIEZAS_TEST_RUN: process.env.PIEZAS_TEST_RUN || '1',
+      // Separate record type names on the test copy, so they never clash with the live app's.
+      PIEZAS_RECORD_PREFIX: 'test_',
       RETENTION_SECRET: process.env.RETENTION_SECRET || process.env.PIEZAS_TEST_API_KEY || '',
     },
       },

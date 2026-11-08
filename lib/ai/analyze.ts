@@ -30,12 +30,13 @@ Reply with JSON only, no other text:
 - At most ${MAX_FLAGS} flags.`;
 
 // Checks a message. Masks first, so nothing unmasked leaves this function. Never throws.
-export async function analyze(input: { text: string }): Promise<AnalyzeResult> {
-  return analyzeWithModel(input.text, ANALYZE_MODEL);
+// `useAi: false` skips Claude and returns the keyword-rules result (used by the S-010 test).
+export async function analyze(input: { text: string }, options: { useAi?: boolean } = {}): Promise<AnalyzeResult> {
+  return analyzeWithModel(input.text, ANALYZE_MODEL, options.useAi ?? true);
 }
 
 // analyze() with the model chosen by the caller. scripts/run-messages.ts uses it to compare models.
-export async function analyzeWithModel(text: string, model: string): Promise<AnalyzeResult> {
+export async function analyzeWithModel(text: string, model: string, useAi = true): Promise<AnalyzeResult> {
   const maskedText = maskNumbers(text);
   const rules = runRules(maskedText);
   const rulesOnly = (): AnalyzeResult => ({
@@ -48,7 +49,7 @@ export async function analyzeWithModel(text: string, model: string): Promise<Ana
 
   try {
     const key = process.env.ANTHROPIC_API_KEY;
-    if (!key) return rulesOnly();
+    if (!key || !useAi) return rulesOnly();
     const ai = await withDeadline((signal) => askClaude(maskedText, model, key, signal), TIMEOUT_MS);
     if (!ai) return rulesOnly();
 

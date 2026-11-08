@@ -42,7 +42,13 @@ export async function POST(request: Request) {
     if (mine.role !== 'parent') throw new HttpError(403, 'not_allowed', 'Only the parent can check a message.');
 
     // Raw text goes only into analyze(); everything stored below is masked.
-    const result = await analyze({ text });
+    // The S-010 scenario turns Claude off with a header. That only works on a
+    // test server (PIEZAS_TEST_RUN=1, not production), never on the live app.
+    const aiOffForTest =
+      process.env.PIEZAS_TEST_RUN === '1' &&
+      process.env.NODE_ENV !== 'production' &&
+      request.headers.get('x-test-ai') === 'off';
+    const result = await analyze({ text }, { useAi: !aiOffForTest });
     const clean = sanitize(result.maskedText, result.flags, result.risk, result.summary);
 
     const { check } = await records();

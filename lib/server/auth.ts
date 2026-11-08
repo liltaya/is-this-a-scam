@@ -52,7 +52,10 @@ export function ensureAuthPolicy(request: Request): Promise<void> {
         // Piezas doesn't document its longest session. If 90 days is refused,
         // keep its default length rather than block sign-in.
         if (errCode(err) !== 'validation_failed') throw err;
-        console.warn('[auth] 90-day sessions were refused; using the Piezas default length');
+        // Loud on purpose: the owner needs to know parents may be signed out early.
+        console.error(
+          '[auth] OWNER ACTION NEEDED: Piezas refused 90-day sessions (R-005). Parents will be signed out after the Piezas default session length.',
+        );
         await users.configurePolicy(base);
       }
     })().catch((err) => {
