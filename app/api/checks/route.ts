@@ -16,8 +16,10 @@ const MAX_TEXT = 5000;
 function sanitize(maskedText: string, flags: Flag[], risk: string, summary: string) {
   const kept = flags.filter((f) => f.quote && maskedText.includes(f.quote)).slice(0, 4);
   const safeRisk = risk === 'red' || risk === 'yellow' ? risk : 'green';
+  // A green result never carries the AI's own wording: only the helper may say a
+  // message is fine, so the parent always sees the same neutral sentence.
   const cleanSummary =
-    safeRisk === 'green' && /\bsafe\b/i.test(summary)
+    safeRisk === 'green'
       ? 'We found no obvious warning signs, but wait for your helper before you act.'
       : summary;
   return { flags: kept, risk: safeRisk as 'red' | 'yellow' | 'green', summary: cleanSummary };
