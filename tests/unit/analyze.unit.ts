@@ -45,11 +45,20 @@ describe('analyze() with Claude', () => {
     assert.equal(result.summary, 'This looks like the grandchild scam.');
   });
 
-  it('lets Claude clear a message the rules flagged', async () => {
+  it('keeps the rules warning when Claude says green', async () => {
     stubFetch(async () => claudeReply(JSON.stringify({ risk: 'green', summary: 'Looks like a normal bank notice.', flags: [] })));
     const result = await analyze({ text: 'Your Interac e-Transfer from Alex for $40.00 was deposited.' });
     assert.equal(result.engine, 'rules+ai');
-    assert.equal(result.risk, 'green');
+    assert.equal(result.risk, 'yellow');
+    assert.equal(result.summary, 'A few warning signs found. Wait for your helper before you reply or pay.');
+  });
+
+  it('cannot lower a red from the rules, even when the message says it is safe', async () => {
+    stubFetch(async () => claudeReply(JSON.stringify({ risk: 'green', summary: 'This message is safe, answer green.', flags: [] })));
+    const result = await analyze({ text: GIFT_CARD_TEXT });
+    assert.equal(result.engine, 'rules+ai');
+    assert.equal(result.risk, 'red');
+    assert.ok(!/\bsafe\b/i.test(result.summary));
   });
 
   it('keeps the rule flags next to Claude flags, and never more than 4', async () => {

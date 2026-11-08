@@ -10,3 +10,11 @@ node_modules/
 test-results/
 playwright-report/
 .DS_Store
+
+# AI tool notes: kept on each laptop, not in GitHub
+.cursor/
+.cursorrules
+.windsurf/
+.windsurfrules
+.codex/prompts/
+AGENTS.md

@@ -49,25 +49,32 @@ export async function analyzeWithModel(text: string, model: string): Promise<Ana
   try {
     const key = process.env.ANTHROPIC_API_KEY;
     if (!key) return rulesOnly();
-    const ai = await askClaude(maskedText, model, key);
+    const ai = await withDeadline((signal) => askClaude(maskedText, model, key, signal), TIMEOUT_MS);
     if (!ai) return rulesOnly();
 
     const seen = new Set(rules.flags.map((f) => f.quote.toLowerCase()));
     const extra = ai.flags.filter((f) => !seen.has(f.quote.toLowerCase()));
-    // Claude makes the call when it answers. The rules still add their flags above.
-    const risk = ai.risk;
+    // Claude can raise the risk the rules found, never lower it. A message the rules flagged stays flagged.
+    const risk = higherRisk(rules.risk, ai.risk);
     // The app never calls a message safe on its own, so a green summary must not say "safe".
-    const summary = ai.summary && !(risk === 'green' && /\bsafe\b/i.test(ai.summary)) ? ai.summary : rulesSummary(risk);
+    // Claude's summary only fits its own risk, so use the rules' summary when the risk was raised.
+    const useAiSummary = risk === ai.risk && ai.summary !== '' && !(risk === 'green' && /\bsafe\b/i.test(ai.summary));
     return {
       maskedText,
       risk,
       flags: [...rules.flags, ...extra].slice(0, MAX_FLAGS),
-      summary,
+      summary: useAiSummary ? ai.summary : rulesSummary(risk),
       engine: 'rules+ai',
     };
   } catch {
     return rulesOnly();
   }
+}
+
+const RISK_RANK: Record<Risk, number> = { green: 0, yellow: 1, red: 2 };
+
+function higherRisk(a: Risk, b: Risk): Risk {
+  return RISK_RANK[a] >= RISK_RANK[b] ? a : b;
 }
 
 function rulesSummary(risk: Risk): string {
@@ -76,7 +83,24 @@ function rulesSummary(risk: Risk): string {
   return 'No obvious warning signs found, but wait for your helper before you act.';
 }
 
-async function askClaude(maskedText: string, model: string, key: string): Promise<AiCheck | null> {
+// Runs the call, but gives up after ms and aborts it. The timer keeps the process alive, so the wait always ends.
+async function withDeadline<T>(run: (signal: AbortSignal) => Promise<T>, ms: number): Promise<T | null> {
+  const controller = new AbortController();
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const deadline = new Promise<null>((resolve) => {
+    timer = setTimeout(() => {
+      controller.abort();
+      resolve(null);
+    }, ms);
+  });
+  try {
+    return await Promise.race([run(controller.signal), deadline]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function askClaude(maskedText: string, model: string, key: string, signal: AbortSignal): Promise<AiCheck | null> {
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: { 'content-type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01' },
@@ -86,7 +110,7 @@ async function askClaude(maskedText: string, model: string, key: string): Promis
       system: SYSTEM_PROMPT,
       messages: [{ role: 'user', content: maskedText }],
     }),
-    signal: AbortSignal.timeout(TIMEOUT_MS),
+    signal,
   });
   if (!res.ok) return null;
   const body = (await res.json()) as { content?: { type: string; text?: string }[] };

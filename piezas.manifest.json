@@ -56,7 +56,8 @@
     "ADMIN_TOKEN",
     "ADMIN_PASS",
     "GOOGLE_CLIENT_SECRET",
-    "ZOOM_CLIENT_SECRET"
+    "ZOOM_CLIENT_SECRET",
+    "RETENTION_SECRET"
   ],
   "integrationPolicy": {
     "piezasOwns": [
@@ -115,8 +116,8 @@
   },
   "publicRoutes": [],
   "deploy": {
-    "requiredEnv": [],
-    "optionalEnv": []
+    "requiredEnv": ["PIEZAS_API_KEY", "PIEZAS_API_URL", "RETENTION_SECRET"],
+    "optionalEnv": ["PIEZAS_APP_URL", "PIEZAS_USERS_URL", "ANTHROPIC_API_KEY", "PIEZAS_HOOK_STATE_DIR"]
   },
   "recipes": [],
   "notes": [

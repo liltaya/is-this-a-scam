@@ -48,10 +48,16 @@ describe('what is left alone', () => {
     assert.equal(maskNumbers('$649.99 charged'), '$649.99 charged');
   });
 
-  it('keeps 4-digit years and dates', () => {
+  it('keeps a 4-digit year only inside a date', () => {
     assert.equal(maskNumbers('Nov 7, 2024'), 'Nov 7, 2024');
     assert.equal(maskNumbers('2024-11-07'), '2024-11-07');
-    assert.equal(maskNumbers('since 2019'), 'since 2019');
+    assert.equal(maskNumbers('11/07/2024'), '11/07/2024');
+    assert.equal(maskNumbers('since 2019'), 'since ****');
+  });
+
+  it('masks a code split by a dash or space', () => {
+    assert.equal(maskNumbers('code 123-456 now'), 'code **** now');
+    assert.equal(maskNumbers('1234 5678 is your code'), '**** is your code');
   });
 
   it('does not mask a number that is already masked', () => {
