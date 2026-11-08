@@ -40,7 +40,7 @@ function VerifyEmailContent() {
     <main className={styles.page}>
       <div className={styles.shell}>
         <section className={styles.intro}>
-          <div className={styles.brand}><span className={styles.brandMark}>✓</span> SafeLine</div>
+          <div className={styles.brand}><span className={styles.brandMark}>✓</span> Is This a Scam?</div>
           <p className={styles.eyebrow}>Caregiver setup · Step 1 of 3</p>
           <h1>Confirm it’s really you.</h1>
           <p className={styles.introCopy}>Confirming your email helps keep your parent’s messages private and makes sure alerts reach you.</p>

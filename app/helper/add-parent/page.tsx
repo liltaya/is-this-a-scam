@@ -88,7 +88,7 @@ export default function AddParent() {
     <main className={styles.page}>
       <div className={styles.shell}>
         <section className={styles.intro}>
-          <div className={styles.brand}><span className={styles.brandMark}>✓</span> SafeLine</div>
+          <div className={styles.brand}><span className={styles.brandMark}>✓</span> Is This a Scam?</div>
           <p className={styles.eyebrow}>Caregiver setup · Step 3 of 3</p>
           <h1>Set up your parent’s access.</h1>
           <p className={styles.introCopy}>You’ll create their password, then sign them in on their phone. They won’t need to remember it.</p>
@@ -152,7 +152,7 @@ export default function AddParent() {
               <div className={styles.notice}>
                 <strong>On your parent’s phone</strong>
                 <ol className={styles.stepsList}>
-                  <li>Open the SafeLine website.</li>
+                  <li>Open the Is This a Scam? website.</li>
                   <li>Tap “I’m setting this up for my parent.”</li>
                   <li>Enter their email and the password below.</li>
                   <li>Add the page to their home screen.</li>

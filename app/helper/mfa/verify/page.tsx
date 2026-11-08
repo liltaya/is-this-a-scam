@@ -31,7 +31,7 @@ export default function VerifySignInCodePage() {
     <main className={styles.page}>
       <div className={styles.shell}>
         <section className={styles.intro}>
-          <div className={styles.brand}><span className={styles.brandMark}>✓</span> SafeLine</div>
+          <div className={styles.brand}><span className={styles.brandMark}>✓</span> Is This a Scam?</div>
           <p className={styles.eyebrow}>Caregiver sign in · Step 2</p>
           <h1>One more step to protect your account.</h1>
           <p className={styles.introCopy}>We sent a one-time code to your email. Enter it here to finish signing in.</p>

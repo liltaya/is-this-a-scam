@@ -125,7 +125,8 @@
       "PIEZAS_APP_URL",
       "PIEZAS_USERS_URL",
       "ANTHROPIC_API_KEY",
-      "PIEZAS_HOOK_STATE_DIR"
+      "PIEZAS_HOOK_STATE_DIR",
+      "PIEZAS_TEST_RUN"
     ]
   },
   "recipes": [],

@@ -5,7 +5,7 @@
 //   Then the saved check and every screen show  1111, and the full number appears nowhere, including what is sent to the Claude API
 //
 import { expect, test } from '@playwright/test';
-import { analyzeText } from '../../lib/analyze-core';
+import { analyze } from '../../lib/ai/analyze';
 import { createScenarioFixture, signInHelper, signInParent } from './support';
 
 test("S-004: Card numbers are masked", async ({ page }) => {
@@ -16,13 +16,21 @@ test("S-004: Card numbers are masked", async ({ page }) => {
     content: [{ type: 'text', text: JSON.stringify({ risk: 'red', flags: [], summary: 'Wait for your helper.' }) }],
     stop_reason: 'end_turn',
   });
-  await analyzeText({ text: `I need gift cards today. The account is ${fullNumber}.` }, {
-    apiKey: 'test-only-key',
-    fetcher: async (_input, init) => {
-      modelRequest = String(init?.body ?? '');
-      return modelResponse;
-    },
-  });
+  // Catch what the engine would send to the Claude API, without calling it.
+  const realFetch = globalThis.fetch;
+  const realKey = process.env.ANTHROPIC_API_KEY;
+  process.env.ANTHROPIC_API_KEY = 'test-only-key';
+  globalThis.fetch = (async (_input: RequestInfo | URL, init?: RequestInit) => {
+    modelRequest = String(init?.body ?? '');
+    return modelResponse;
+  }) as typeof fetch;
+  try {
+    await analyze({ text: `I need gift cards today. The account is ${fullNumber}.` });
+  } finally {
+    globalThis.fetch = realFetch;
+    if (realKey === undefined) delete process.env.ANTHROPIC_API_KEY;
+    else process.env.ANTHROPIC_API_KEY = realKey;
+  }
   expect(modelRequest).toContain('**** 1111');
   expect(modelRequest).not.toContain(fullNumber);
   await signInParent(page, fixture);
@@ -35,7 +43,7 @@ test("S-004: Card numbers are masked", async ({ page }) => {
   expect(created.ok()).toBeTruthy();
   const id = new URL(page.url()).pathname.split('/').at(-1)!;
 
-  await expect(page.getByTestId('checked-message')).toContainText('**** 1111');
+  await expect(page.getByTestId('masked-text')).toContainText('**** 1111');
   await expect(page.getByText(fullNumber, { exact: false })).toHaveCount(0);
   const stored = await page.evaluate(async (checkId) => {
     const response = await fetch(`/api/checks/${encodeURIComponent(checkId)}`, { cache: 'no-store' });

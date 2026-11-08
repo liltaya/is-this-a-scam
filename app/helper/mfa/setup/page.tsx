@@ -43,7 +43,7 @@ export default function SetupSignInCodesPage() {
     <main className={styles.page}>
       <div className={styles.shell}>
         <section className={styles.intro}>
-          <div className={styles.brand}><span className={styles.brandMark}>✓</span> SafeLine</div>
+          <div className={styles.brand}><span className={styles.brandMark}>✓</span> Is This a Scam?</div>
           <p className={styles.eyebrow}>Caregiver setup · Step 2 of 3</p>
           <h1>Keep your family’s messages private.</h1>
           <p className={styles.introCopy}>Turn on a one-time sign-in code. We’ll email you a code each time you sign in.</p>

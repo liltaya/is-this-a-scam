@@ -1,7 +1,6 @@
+// The app's entry point to the scam engine. 'server-only' makes the build fail if
+// browser code ever imports this, so ANTHROPIC_API_KEY and the engine stay on the
+// server. Scripts and unit tests import lib/ai/analyze directly instead.
 import 'server-only';
-import type { AnalyzeResult } from '@/lib/contracts';
-import { analyzeText } from '../analyze-core';
 
-export function analyze(input: { text: string }): Promise<AnalyzeResult> {
-  return analyzeText(input, { apiKey: process.env.ANTHROPIC_API_KEY, fetcher: fetch });
-}
+export { analyze } from '@/lib/ai/analyze';

@@ -47,7 +47,7 @@ function SentContent() {
     <main className={styles.page}>
       <div className={styles.shell}>
         <section className={styles.intro}>
-          <div className={styles.brand}><span className={styles.brandMark}>✓</span> SafeLine</div>
+          <div className={styles.brand}><span className={styles.brandMark}>✓</span> Is This a Scam?</div>
           <p className={styles.eyebrow}>Caregiver reply</p>
           <h1>{answered ? `Sent. ${pair?.parentName || 'Your parent'} sees your answer now.` : 'Your reply hasn’t been confirmed yet.'}</h1>
           <p className={styles.introCopy}>Your response is saved with the message check so your parent can see what you advised.</p>

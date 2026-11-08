@@ -1,149 +1,96 @@
 'use client';
 
-import { use, useEffect, useState } from 'react';
+import { use, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import type { Check, Pair } from '@/lib/contracts';
+import type { Check, Flag, FlagType, Pair } from '@/lib/contracts';
+import styles from '../parent-experience.module.css';
 
-type ApiError = { error?: { message?: string; code?: string } };
-const riskLabel = {
-  red: 'Several warning signs',
-  yellow: 'A few warning signs',
-  green: 'No obvious warning signs',
-} as const;
+type ApiError = { error?: { message?: string } };
+const POLL_MS = 3_000;
+const WAIT_MS = 10 * 60 * 1_000;
 
-async function readJson<T>(response: Response): Promise<T> {
-  const data = await response.json() as T | ApiError;
-  if (!response.ok) {
-    const error = (data as ApiError).error;
-    throw new Error(error?.message || 'We couldn’t load this check. Please try again.');
-  }
-  return data as T;
+const flagLabel: Record<FlagType, string> = {
+  urgency: 'Rush', money: 'Money', gift_cards: 'Gift cards', codes: 'Asks for codes or details',
+  secrecy: 'Secrecy', impersonation: 'Pretends to be someone', link: 'Strange link', other: 'Other warning sign',
+};
+
+function highlightedMessage(text: string, flags: Flag[]) {
+  const quotes = [...new Set(flags.map((flag) => flag.quote).filter(Boolean))].sort((a, b) => b.length - a.length);
+  if (!quotes.length) return text;
+  const escaped = quotes.map((quote) => quote.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  const parts = text.split(new RegExp(`(${escaped.join('|')})`, 'gi'));
+  const flagged = new Set(quotes.map((quote) => quote.toLowerCase()));
+  return parts.map((part, index) => flagged.has(part.toLowerCase()) ? <mark key={index}>{part}</mark> : part);
 }
 
 export default function Result({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const search = useSearchParams();
-  const alertFailed = search.get('alert') === 'failed';
   const [check, setCheck] = useState<Check | null>(null);
   const [pair, setPair] = useState<Pair | null>(null);
-  const [now, setNow] = useState(Date.now());
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
+  const helperNotified = search.get('helperNotified') !== 'false';
 
   useEffect(() => {
     let active = true;
-    let initialLoaded = false;
-    const checkUrl = `/api/checks/${encodeURIComponent(id)}`;
-    const refreshCheck = async () => {
+    async function load() {
       try {
-        const response = await fetch(checkUrl, { credentials: 'same-origin', cache: 'no-store' });
-        const result = await readJson<{ check: Check }>(response);
-        if (active) setCheck(result.check);
-      } catch (loadError) {
-        if (active && !initialLoaded) setError(loadError instanceof Error ? loadError.message : 'We couldn’t load this check.');
+        const response = await fetch(`/api/checks/${encodeURIComponent(id)}`, { cache: 'no-store' });
+        const body = await response.json().catch(() => ({})) as { check?: Check } & ApiError;
+        if (!response.ok || !body.check) throw new Error(body.error?.message ?? 'We could not find that check.');
+        if (active) { setCheck(body.check); setError(''); }
+      } catch (reason) {
+        if (active) setError(reason instanceof Error ? reason.message : 'We could not find that check.');
+      } finally {
+        if (active) setLoading(false);
       }
-    };
-
-    Promise.all([
-      fetch(checkUrl, { credentials: 'same-origin', cache: 'no-store' }).then((response) => readJson<{ check: Check }>(response)),
-      fetch('/api/pair', { credentials: 'same-origin', cache: 'no-store' }).then((response) => readJson<{ pair: Pair }>(response)),
-    ])
-      .then(([checkResult, pairResult]) => {
-        if (!active) return;
-        initialLoaded = true;
-        setCheck(checkResult.check);
-        setPair(pairResult.pair);
-        setLoading(false);
-      })
-      .catch((loadError: unknown) => {
-        if (!active) return;
-        setError(loadError instanceof Error ? loadError.message : 'We couldn’t load this check.');
-        setLoading(false);
-      });
-
-    const poll = window.setInterval(() => { void refreshCheck(); }, 3000);
-    const clock = window.setInterval(() => setNow(Date.now()), 1000);
-    return () => {
-      active = false;
-      window.clearInterval(poll);
-      window.clearInterval(clock);
-    };
+    }
+    load();
+    fetch('/api/pair', { cache: 'no-store' })
+      .then(async (response) => response.ok ? (await response.json()) as { pair: Pair } : null)
+      .then((body) => { if (active && body) setPair(body.pair); })
+      .catch(() => undefined);
+    return () => { active = false; };
   }, [id]);
 
-  if (loading) return <main><p role="status">Loading your check…</p></main>;
-  if (error || !check || !pair) {
-    return <main><h1>We couldn&apos;t load this check.</h1><p className="muted" role="alert">{error || 'Please sign in and open your check again.'}</p><a href="/setup" className="btn">Sign in</a></main>;
-  }
+  useEffect(() => {
+    if (!check || check.helperAnswer !== 'pending' || check.textClearedAt || !helperNotified) return;
+    const timer = window.setInterval(() => {
+      fetch(`/api/checks/${encodeURIComponent(id)}`, { cache: 'no-store' })
+        .then(async (response) => response.ok ? (await response.json()) as { check: Check } : null)
+        .then((body) => { if (body) setCheck(body.check); })
+        .catch(() => undefined);
+    }, POLL_MS);
+    return () => window.clearInterval(timer);
+  }, [check?.helperAnswer, check?.textClearedAt, helperNotified, id]);
 
-  const answer = check.helperAnswer;
-  const ageMs = Math.max(0, now - Date.parse(check.createdAt));
-  const showFallback = answer === 'pending' && (alertFailed || ageMs >= 10 * 60 * 1000);
+  const fallback = Boolean(check && check.helperAnswer === 'pending' && (!helperNotified || Date.now() - Date.parse(check.createdAt) >= WAIT_MS));
+  const message = useMemo(() => check?.maskedText ? highlightedMessage(check.maskedText, check.flags) : null, [check]);
+  const helperName = pair?.helperName ?? 'your helper';
+
+  if (loading) return <main className={styles.parent}><p>Loading…</p></main>;
+  if (error || !check) return <main className={styles.parent}><h1>Not found</h1><p className="muted">{error || 'This check doesn’t exist or isn’t yours.'}</p><a href="/" className="btn">Go home</a></main>;
 
   return (
-    <main>
-      {answer === 'scam' && (
-        <>
-          <div className="answer scam" data-testid="helper-answer">Scam.<br />Don&apos;t reply or pay.</div>
-          <p className="muted">{pair.helperName} checked it for you.</p>
-          {check.helperNote && <p className="note">&ldquo;{check.helperNote}&rdquo; — {pair.helperName}</p>}
-        </>
-      )}
-      {answer === 'safe' && (
-        <>
-          <div className="answer safe" data-testid="helper-answer">All good.</div>
-          <p className="muted">{pair.helperName} checked it for you.</p>
-          {check.helperNote && <p className="note">&ldquo;{check.helperNote}&rdquo; — {pair.helperName}</p>}
-        </>
-      )}
+    <main className={styles.parent}>
+      {check.helperAnswer === 'scam' && <><div className="answer scam" data-testid="helper-answer">Scam.<br />Don&apos;t reply or pay.</div><p className="muted">{helperName} checked it for you.</p></>}
+      {check.helperAnswer === 'safe' && <><div className="answer safe" data-testid="helper-answer">All good.</div><p className="muted">{helperName} checked it for you.</p></>}
+      {check.helperNote && <p className="note">“{check.helperNote}” — {helperName}</p>}
 
-      {answer === 'pending' && (
-        <>
-          <div className={`risk ${check.risk}`} data-testid="risk">{riskLabel[check.risk]}</div>
-          <p>{check.summary}</p>
-          {showFallback ? (
-            <>
-              <div className="fallback" data-testid="fallback">
-                Don&apos;t pay or reply until you talk to someone you trust.
-              </div>
-              {pair.helperPhone && (
-                <a href={`tel:${pair.helperPhone.replace(/\s/g, '')}`} className="btn" data-testid="call-helper">
-                  Call {pair.helperName}
-                </a>
-              )}
-            </>
-          ) : (
-            <div className="waiting" data-testid="waiting">
-              <span className="dot" aria-hidden="true" />
-              Waiting for {pair.helperName}…
-            </div>
-          )}
-          <p className="muted">Don&apos;t reply, click links or pay while you wait.</p>
-        </>
-      )}
+      {check.helperAnswer === 'pending' && <>
+        <div className={`risk ${check.risk}`} data-testid="risk">{check.risk === 'red' ? 'Looks like a scam' : check.risk === 'yellow' ? 'Be careful' : 'No warning signs found'}</div>
+        <p>{check.summary}</p>
+        {fallback ? <><div className="fallback" data-testid="fallback">Don&apos;t pay or reply until you talk to someone you trust.</div>{pair?.helperPhone && <a href={`tel:${pair.helperPhone.replace(/\s/g, '')}`} className="btn" data-testid="call-helper">Call {helperName}</a>}</> : <div className="waiting" data-testid="waiting"><span className="dot" aria-hidden="true" />Waiting for {helperName}…</div>}
+        <p className="muted">Don&apos;t reply, click links or pay while you wait.</p>
+      </>}
 
-      <h2>The message</h2>
-      {check.textClearedAt ? (
-        <p className="message" data-testid="text-cleared">This message was cleared after 30 days.</p>
-      ) : (
-        <p className="message" data-testid="checked-message">{check.maskedText}</p>
-      )}
-      {!check.textClearedAt && check.maskedText?.includes('****') && (
-        <p className="masked-note" data-testid="masked-note">🔒 We hid card and account numbers before saving this message.</p>
-      )}
-
-      {check.flags.length > 0 && (
-        <section aria-labelledby="flags">
-          <h2 id="flags">What we noticed</h2>
-          {check.flags.map((flag, index) => (
-            <div className={`flag ${flag.source}`} key={`${flag.type}-${index}`} data-testid="flag">
-              <strong>{flag.type.replaceAll('_', ' ')}</strong>
-              {flag.quote && <q>{flag.quote}</q>}
-              {flag.explain && <p>{flag.explain}</p>}
-            </div>
-          ))}
-        </section>
-      )}
-
+      {check.textClearedAt ? <p className="card" data-testid="text-cleared">This message was cleared after 30 days.</p> : <>
+        <h2>The message</h2>
+        <p className="message" data-testid="masked-text">{message}</p>
+        {check.maskedText?.includes('****') && <p className="masked-note" data-testid="masked-note">🔒 We hid card and account numbers before saving this message.</p>}
+        {check.flags.length > 0 && <section aria-labelledby="flags"><h2 id="flags">What we noticed</h2>{check.flags.map((flag, index) => <div className={`flag ${flag.source}`} key={`${flag.type}-${index}`} data-testid="flag"><strong>{flagLabel[flag.type]}</strong><q>{flag.quote}</q><p>{flag.explain}</p></div>)}</section>}
+      </>}
       <a href="/" className="btn secondary">Done</a>
     </main>
   );

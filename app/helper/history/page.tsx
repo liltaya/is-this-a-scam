@@ -77,7 +77,7 @@ export default function HelperHistoryPage() {
     <main className={styles.page}>
       <div className={styles.shell}>
         <section className={styles.intro}>
-          <div className={styles.brand}><span className={styles.brandMark}>✓</span> SafeLine</div>
+          <div className={styles.brand}><span className={styles.brandMark}>✓</span> Is This a Scam?</div>
           <p className={styles.eyebrow}>Caregiver account</p>
           <h1>Past message checks</h1>
           <p className={styles.introCopy}>

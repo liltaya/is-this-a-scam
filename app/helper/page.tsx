@@ -35,7 +35,7 @@ export default function HelperHomePage() {
     <main className={styles.page}>
       <div className={styles.shell}>
         <section className={styles.intro}>
-          <div className={styles.brand}><span className={styles.brandMark}>✓</span> SafeLine</div>
+          <div className={styles.brand}><span className={styles.brandMark}>✓</span> Is This a Scam?</div>
           <p className={styles.eyebrow}>Caregiver account</p>
           <h1>You’re ready to help.</h1>
           <p className={styles.introCopy}>When {status?.pair?.parentName || 'your parent'} asks for help, we’ll email you a secure link to review the message and reply.</p>

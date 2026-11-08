@@ -67,7 +67,7 @@ export default function ReviewCheck({ params }: { params: Promise<{ id: string }
     <main className={styles.page}>
       <div className={styles.shell}>
         <section className={styles.intro}>
-          <div className={styles.brand}><span className={styles.brandMark}>✓</span> SafeLine</div>
+          <div className={styles.brand}><span className={styles.brandMark}>✓</span> Is This a Scam?</div>
           <p className={styles.eyebrow}>Caregiver review</p>
           <h1>{pair ? `${pair.parentName} asked you to check this.` : 'Review this message.'}</h1>
           <p className={styles.introCopy}>Look at the warning signs, then send your answer. Your parent will see the first reply.</p>

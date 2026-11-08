@@ -67,7 +67,7 @@ export function helperSignedInPath(status: AuthStatus, returnTo: string | null):
 
 export function friendlyAuthError(error: unknown): string {
   if (error instanceof AuthRequestError) {
-    if (error.code === 'bad_origin') return 'Please open SafeLine directly, then try again.';
+    if (error.code === 'bad_origin') return 'Please open the app directly, then try again.';
     if (error.code === 'expired') return 'That step timed out. Please sign in again.';
     if (error.code === 'invalid_link') return 'That email link has expired. Please sign in and request a new one.';
     if (error.code === 'email_not_verified') return 'Please confirm your email from the link we sent before continuing.';
@@ -78,5 +78,5 @@ export function friendlyAuthError(error: unknown): string {
     if (error.code === 'rate_limited') return 'There have been too many attempts. Please wait a little and try again.';
     return error.message;
   }
-  return 'We couldn’t reach SafeLine. Check your connection and try again.';
+  return 'We couldn’t reach the app. Check your connection and try again.';
 }

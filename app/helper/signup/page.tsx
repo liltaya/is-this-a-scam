@@ -32,7 +32,7 @@ export default function HelperSignUp() {
     <main className={styles.page}>
       <div className={styles.shell}>
         <section className={styles.intro}>
-          <div className={styles.brand}><span className={styles.brandMark}>✓</span> SafeLine</div>
+          <div className={styles.brand}><span className={styles.brandMark}>✓</span> Is This a Scam?</div>
           <p className={styles.eyebrow}>A little backup when it matters</p>
           <h1>Help your parent feel safer with every message.</h1>
           <p className={styles.introCopy}>When they’re unsure about a text, they can ask you before replying. You’ll get the warning signs and can answer in one tap.</p>

@@ -1,11 +1,11 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState, type FormEvent } from 'react';
-import type { Check } from '@/lib/contracts';
+import { useState } from 'react';
+import styles from './parent-experience.module.css';
 
-type CreateCheckResponse = { check: Check; helperNotified: boolean };
-type ApiErrorResponse = { error?: { code?: string; message?: string } };
+type CreateCheckResponse = { check: { id: string }; helperNotified: boolean };
+type ApiError = { error?: { message?: string } };
 
 export default function PasteMessage() {
   const router = useRouter();
@@ -13,15 +13,10 @@ export default function PasteMessage() {
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  async function submit(event: FormEvent<HTMLFormElement>) {
+  async function submit(event: React.FormEvent) {
     event.preventDefault();
-    const message = text.trim();
-    if (!message) {
+    if (!text.trim()) {
       setError('Please paste the message first.');
-      return;
-    }
-    if (message.length > 5000) {
-      setError('That message is too long. Please paste a shorter part of it.');
       return;
     }
 
@@ -30,48 +25,37 @@ export default function PasteMessage() {
     try {
       const response = await fetch('/api/checks', {
         method: 'POST',
-        credentials: 'same-origin',
-        headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: message }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text }),
       });
-      const result = await response.json() as CreateCheckResponse | ApiErrorResponse;
-      if (!response.ok) {
-        const apiError = (result as ApiErrorResponse).error;
-        if (apiError?.code === 'signed_out') {
-          setError('Please sign in again before checking a message.');
-        } else {
-          setError(apiError?.message || 'We couldn’t check this message right now. Please try again.');
-        }
-        return;
+      const body = await response.json().catch(() => ({})) as CreateCheckResponse & ApiError;
+      if (!response.ok || !body.check?.id) {
+        throw new Error(body.error?.message ?? 'We could not check that message. Please try again.');
       }
-
-      const created = result as CreateCheckResponse;
-      const alert = created.helperNotified ? '' : '?alert=failed';
-      router.push(`/check/${encodeURIComponent(created.check.id)}${alert}`);
-    } catch {
-      setError('We couldn’t reach SafeLine. Check your connection and try again.');
-    } finally {
+      const notice = body.helperNotified ? '' : '?helperNotified=false';
+      router.push(`/check/${encodeURIComponent(body.check.id)}${notice}`);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'We could not check that message. Please try again.');
       setSubmitting(false);
     }
   }
 
   return (
-    <main>
+    <main className={styles.parent}>
       <p className="steps">Step 1 of 2</p>
       <h1>Paste the message here</h1>
-      <p className="muted">Press and hold in the box, then tap Paste. We hide account and verification numbers before saving or reviewing it.</p>
+      <p className="muted">Press and hold in the box, then tap Paste.</p>
       <form onSubmit={submit}>
         <textarea
           aria-label="The message"
           data-testid="message-input"
           value={text}
-          maxLength={5000}
           onChange={(event) => { setText(event.target.value); setError(''); }}
           placeholder="Paste the text, email or link"
-          required
+          disabled={submitting}
         />
         {error && <p className="err" role="alert">{error}</p>}
-        <button className="btn" type="submit" disabled={submitting} data-testid="submit-check">
+        <button className="btn" type="submit" data-testid="submit-check" disabled={submitting}>
           {submitting ? 'Checking…' : 'Check this message'}
         </button>
       </form>

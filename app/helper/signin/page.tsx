@@ -40,7 +40,7 @@ function SignInContent() {
     <main className={styles.page}>
       <div className={styles.shell}>
         <section className={styles.intro}>
-          <div className={styles.brand}><span className={styles.brandMark}>✓</span> SafeLine</div>
+          <div className={styles.brand}><span className={styles.brandMark}>✓</span> Is This a Scam?</div>
           <p className={styles.eyebrow}>For family caregivers</p>
           <h1>Be there when a message feels off.</h1>
           <p className={styles.introCopy}>Sign in to help your parent check suspicious texts and see their past checks.</p>

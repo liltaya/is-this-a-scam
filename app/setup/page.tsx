@@ -44,7 +44,7 @@ function ParentFirstSignInForm() {
     <main className={styles.page}>
       <div className={styles.shell}>
         <section className={styles.intro}>
-          <div className={styles.brand}><span className={styles.brandMark}>✓</span> SafeLine</div>
+          <div className={styles.brand}><span className={styles.brandMark}>✓</span> Is This a Scam?</div>
           <p className={styles.eyebrow}>A caregiver is helping you set up</p>
           <h1>A little help is always close by.</h1>
           <p className={styles.introCopy}>Once you’re signed in, you can share a text that feels suspicious and ask your caregiver what to do.</p>
