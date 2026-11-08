@@ -7,7 +7,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "test:unit": "node --import ./scripts/ts-paths.mjs --test tests/unit/*.unit.ts"
+    "test:unit": "node --import ./scripts/ts-paths.mjs --test tests/unit/*.unit.ts",
+    "check:messages": "node --env-file-if-exists=.env --import ./scripts/ts-paths.mjs scripts/run-messages.ts"
   },
   "devDependencies": {
     "@playwright/test": "^1.47.0",
