@@ -8,8 +8,10 @@ const key = process.env.PIEZAS_TEST_API_KEY;
 if (!key) throw new Error('The separate Piezas test copy is not configured.');
 
 const piezas = new Piezas({ apiKey: key, apiBaseUrl: process.env.PIEZAS_API_URL });
-const entities = piezas.defineEntities({
-  pair: {
+// Must match PIEZAS_RECORD_PREFIX in playwright.config.ts (the test server's record names).
+const PREFIX = 'test_';
+const defined = piezas.defineEntities({
+  [`${PREFIX}pair`]: {
     fields: {
       parentUserId: { type: 'text', required: true },
       helperUserId: { type: 'text', required: true },
@@ -18,7 +20,7 @@ const entities = piezas.defineEntities({
       helperPhone: { type: 'phone' },
     },
   },
-  check: {
+  [`${PREFIX}check`]: {
     fields: {
       pairId: { type: 'text', required: true },
       parentUserId: { type: 'text', required: true },
@@ -34,6 +36,10 @@ const entities = piezas.defineEntities({
       textClearedAt: { type: 'datetime' },
     },
   },
+});
+const entities = defined.then((d) => {
+  const byName = d as Record<string, Awaited<typeof defined>[keyof Awaited<typeof defined>]>;
+  return { pair: byName[`${PREFIX}pair`], check: byName[`${PREFIX}check`] };
 });
 
 export type ScenarioFixture = {
@@ -208,7 +214,7 @@ export async function createCheckForFixture(fixture: ScenarioFixture, options: {
     summary: options.flags.length ? 'This message has warning signs. Wait for Alex before you act.' : 'No warning signs were found, but wait for Alex before you act.',
     engine: options.engine ?? 'rules-only',
     helperAnswer,
-    helperNote: options.helperNote || null,
+    helperNote: null, // this helper always saves an empty note
     createdAt: record.createdAt,
     answeredAt: answeredAt || null,
     textClearedAt: null,

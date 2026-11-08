@@ -12,7 +12,7 @@ test("S-002: The parent checks the gift card message", async ({ page }) => {
   await signInParent(page, fixture);
   await page.goto('/');
   await page.getByTestId('start-check').click();
-  await page.getByTestId('message-input').fill('Grandma, I need $900 in gift cards today. Please don't tell Mom.');
+  await page.getByTestId('message-input').fill("Grandma, I need $900 in gift cards today. Please don't tell Mom.");
   const createResponse = page.waitForResponse((response) => response.url().endsWith('/api/checks') && response.request().method() === 'POST');
   await page.getByTestId('submit-check').click();
   const response = await createResponse;
@@ -32,7 +32,7 @@ test("S-002: The parent checks the gift card message", async ({ page }) => {
   expect(new URL(reviewUrl!).pathname).toBe(`/helper/checks/${encodeURIComponent(created.check.id)}`);
   expect(alert.bodyRendered).not.toContain('Grandma, I need $900');
 
-  await expect(page.getByTestId('risk')).toContainText('Several warning signs');
+  await expect(page.getByTestId('risk')).toContainText('Looks like a scam');
   await expect(page.getByTestId('flag')).toHaveCount(3);
   await expect(page.getByTestId('waiting')).toContainText('Waiting for Alex');
 

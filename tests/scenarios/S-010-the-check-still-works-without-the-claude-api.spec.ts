@@ -9,12 +9,14 @@ import { createScenarioFixture, signInParent } from './support';
 
 test("S-010: The check still works without the Claude API", async ({ page }) => {
   const fixture = await createScenarioFixture({ withCheck: false });
+  // Switch Claude off for this check, whether or not the test server has a key.
+  await page.setExtraHTTPHeaders({ 'x-test-ai': 'off' });
   await signInParent(page, fixture);
   await page.goto('/');
   await page.getByTestId('start-check').click();
   await page.getByTestId('message-input').fill('I need gift cards today. Please do not tell anyone.');
   await page.getByTestId('submit-check').click();
-  await expect(page.getByTestId('risk')).toContainText('Several warning signs');
+  await expect(page.getByTestId('risk')).toContainText('Looks like a scam');
   await expect(page.getByTestId('waiting')).toContainText('Waiting for Alex');
 
   const id = new URL(page.url()).pathname.split('/').at(-1)!;

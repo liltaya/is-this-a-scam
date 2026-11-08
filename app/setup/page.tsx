@@ -3,14 +3,16 @@
 import { Suspense, useState, type FormEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import type { AuthStatus } from '@/lib/contracts';
-import { pair } from '@/lib/sample-data';
 import { authRequest, friendlyAuthError, isMfaRequired, type SignInStatus } from '../helper/auth-client';
 import styles from '../helper/helper-flow.module.css';
+
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 function ParentFirstSignInForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const parentName = searchParams.get('name') || pair.parentName;
+  // Real name when the helper's setup link passes it; otherwise a neutral wording.
+  const parentName = searchParams.get('name')?.trim().slice(0, 60) || 'your parent';
   const [done, setDone] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -60,11 +62,11 @@ function ParentFirstSignInForm() {
               <p className={styles.eyebrow}>Set up on this phone</p>
               <header className={styles.panelHeader}>
                 <h2>Sign {parentName} in</h2>
-                <p>The caregiver enters this once. {parentName} won’t need to see or remember the password.</p>
+                <p>The caregiver enters this once. {cap(parentName)} won’t need to see or remember the password.</p>
               </header>
               <form onSubmit={signIn}>
                 <div className={styles.inputGroup}>
-                  <label htmlFor="semail">{parentName}’s email</label>
+                  <label htmlFor="semail">{cap(parentName)}’s email</label>
                   <input id="semail" type="email" autoComplete="username" value={email} onChange={(event) => setEmail(event.target.value)} required data-testid="setup-email" />
                 </div>
                 <div className={styles.inputGroup}>
@@ -74,13 +76,13 @@ function ParentFirstSignInForm() {
                 {error && <p className={styles.errorMessage} role="alert">{error}</p>}
                 <button className={styles.primaryButton} type="submit" disabled={loading} data-testid="setup-signin">{loading ? 'Signing in…' : `Sign ${parentName} in`}</button>
               </form>
-              <p className={styles.previewNote}>Keep the password private. {parentName} won’t need to type it again.</p>
+              <p className={styles.previewNote}>Keep the password private. {cap(parentName)} won’t need to type it again.</p>
             </>
           ) : (
             <>
               <div className={styles.successMark} aria-hidden="true">✓</div>
               <header className={styles.panelHeader}>
-                <h2>{parentName}’s phone is ready</h2>
+                <h2>{cap(parentName)}’s phone is ready</h2>
                 <p>They’re signed in and will stay signed in for 90 days.</p>
               </header>
               <div className={styles.notice}>Add this page to the home screen so {parentName} can easily find the help button.</div>

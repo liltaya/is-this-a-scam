@@ -13,12 +13,14 @@ type Me = {
 
 export default function Home() {
   const [me, setMe] = useState<Me | null>(null);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     fetch('/api/auth/me')
       .then(async (response) => (response.ok ? (await response.json()) as Me : null))
       .then(setMe)
-      .catch(() => setMe(null));
+      .catch(() => setMe(null))
+      .finally(() => setLoaded(true));
   }, []);
 
   const parentName = me?.role === 'parent' ? me.name : undefined;
@@ -34,6 +36,13 @@ export default function Home() {
       <p className="muted">
         Tap the button, paste the message, and {helperName ?? 'your helper'} will tell you what they think.
       </p>
+      {loaded && !me && (
+        <p className="muted">
+          <Link href="/setup" data-testid="parent-setup-link">Set up this phone for my parent</Link>
+          {' · '}
+          <Link href="/helper/signin">I&apos;m a helper</Link>
+        </p>
+      )}
     </main>
   );
 }
