@@ -66,8 +66,6 @@ export async function POST(request: Request) {
         engine: result.engine === 'rules+ai' ? 'rules+ai' : 'rules-only',
         helperAnswer: 'pending',
         helperNote: '',
-        answeredAt: '',
-        textClearedAt: '',
       },
     });
     const created = toCheck(record);
