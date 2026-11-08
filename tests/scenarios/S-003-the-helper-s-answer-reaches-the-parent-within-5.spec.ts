@@ -4,14 +4,29 @@
 //   When Alex opens it from the email link and taps "Scam"
 //   Then Alex sees "Sent. Galina sees your answer now." and Galina's screen shows "Scam. Don't reply or pay." within 5 seconds
 //
-// NOT WRITTEN YET. Replace the test body with the real steps, driven against
-// the running app: open the page (page.goto), do what the When line says
-// (click, fill, ...), and check what the Then line says is visible
-// (await expect(page.getByTestId(...)).toBeVisible() / toHaveText(...)).
-// Keep the first line: it tells Piezas which scenario (and which wording of
-// it) this test checks. Never skip the test or fake Piezas.
-import { test } from '@playwright/test';
+import { expect, test } from '@playwright/test';
+import { createScenarioFixture, signInHelper, signInParent } from './support';
 
-test("S-003: The helper's answer reaches the parent within 5 seconds", async () => {
-  throw new Error("PIEZAS_NOT_WRITTEN: S-003 has no test yet");
+test("S-003: The helper's answer reaches the parent within 5 seconds", async ({ browser }) => {
+  const fixture = await createScenarioFixture();
+  const parentContext = await browser.newContext();
+  const helperContext = await browser.newContext();
+  const parentPage = await parentContext.newPage();
+  const helperPage = await helperContext.newPage();
+
+  await signInParent(parentPage, fixture);
+  await parentPage.goto(`/check/${encodeURIComponent(fixture.check!.id)}`);
+  await expect(parentPage.getByTestId('waiting')).toContainText('Waiting for Alex');
+
+  await signInHelper(helperPage, fixture);
+  await helperPage.goto(`/helper/checks/${encodeURIComponent(fixture.check!.id)}`);
+  await expect(helperPage.getByTestId('masked-text')).toContainText(fixture.check!.maskedText!);
+  const answeredAt = Date.now();
+  await helperPage.getByTestId('answer-scam').click();
+  await expect(helperPage.getByTestId('sent')).toContainText('Sent. Galina sees your answer now.');
+  await expect(parentPage.getByTestId('helper-answer')).toContainText("Scam.", { timeout: 5000 });
+  expect(Date.now() - answeredAt).toBeLessThan(5000);
+
+  await parentContext.close();
+  await helperContext.close();
 });

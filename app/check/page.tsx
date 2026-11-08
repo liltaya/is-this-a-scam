@@ -1,42 +1,79 @@
 'use client';
+
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
-import { maskNumbers } from '@/lib/mask';
-import { runRules } from '@/lib/rules';
+import { useState, type FormEvent } from 'react';
+import type { Check } from '@/lib/contracts';
+
+type CreateCheckResponse = { check: Check; helperNotified: boolean };
+type ApiErrorResponse = { error?: { code?: string; message?: string } };
 
 export default function PasteMessage() {
   const router = useRouter();
   const [text, setText] = useState('');
   const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
-  function submit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!text.trim()) {
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const message = text.trim();
+    if (!message) {
       setError('Please paste the message first.');
       return;
     }
-    // Preview only: the real app does this on the server and saves the check in Piezas.
-    const masked = maskNumbers(text);
-    const { risk, flags } = runRules(masked);
-    sessionStorage.setItem('preview-check', JSON.stringify({ maskedText: masked, risk, flags }));
-    router.push('/check/new');
+    if (message.length > 5000) {
+      setError('That message is too long. Please paste a shorter part of it.');
+      return;
+    }
+
+    setSubmitting(true);
+    setError('');
+    try {
+      const response = await fetch('/api/checks', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: message }),
+      });
+      const result = await response.json() as CreateCheckResponse | ApiErrorResponse;
+      if (!response.ok) {
+        const apiError = (result as ApiErrorResponse).error;
+        if (apiError?.code === 'signed_out') {
+          setError('Please sign in again before checking a message.');
+        } else {
+          setError(apiError?.message || 'We couldn’t check this message right now. Please try again.');
+        }
+        return;
+      }
+
+      const created = result as CreateCheckResponse;
+      const alert = created.helperNotified ? '' : '?alert=failed';
+      router.push(`/check/${encodeURIComponent(created.check.id)}${alert}`);
+    } catch {
+      setError('We couldn’t reach SafeLine. Check your connection and try again.');
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
     <main>
       <p className="steps">Step 1 of 2</p>
       <h1>Paste the message here</h1>
-      <p className="muted">Press and hold in the box, then tap Paste.</p>
+      <p className="muted">Press and hold in the box, then tap Paste. We hide account and verification numbers before saving or reviewing it.</p>
       <form onSubmit={submit}>
         <textarea
           aria-label="The message"
           data-testid="message-input"
           value={text}
-          onChange={(e) => { setText(e.target.value); setError(''); }}
+          maxLength={5000}
+          onChange={(event) => { setText(event.target.value); setError(''); }}
           placeholder="Paste the text, email or link"
+          required
         />
         {error && <p className="err" role="alert">{error}</p>}
-        <button className="btn" type="submit" data-testid="submit-check">Check this message</button>
+        <button className="btn" type="submit" disabled={submitting} data-testid="submit-check">
+          {submitting ? 'Checking…' : 'Check this message'}
+        </button>
       </form>
       <a href="/" className="btn secondary">Go back</a>
     </main>

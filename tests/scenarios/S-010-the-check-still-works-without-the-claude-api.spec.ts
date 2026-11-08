@@ -4,14 +4,25 @@
 //   When Galina submits the gift card message
 //   Then she still gets a red result from the keyword rules, and the check is marked rules-only
 //
-// NOT WRITTEN YET. Replace the test body with the real steps, driven against
-// the running app: open the page (page.goto), do what the When line says
-// (click, fill, ...), and check what the Then line says is visible
-// (await expect(page.getByTestId(...)).toBeVisible() / toHaveText(...)).
-// Keep the first line: it tells Piezas which scenario (and which wording of
-// it) this test checks. Never skip the test or fake Piezas.
-import { test } from '@playwright/test';
+import { expect, test } from '@playwright/test';
+import { createScenarioFixture, signInParent } from './support';
 
-test("S-010: The check still works without the Claude API", async () => {
-  throw new Error("PIEZAS_NOT_WRITTEN: S-010 has no test yet");
+test("S-010: The check still works without the Claude API", async ({ page }) => {
+  const fixture = await createScenarioFixture({ withCheck: false });
+  await signInParent(page, fixture);
+  await page.goto('/');
+  await page.getByTestId('start-check').click();
+  await page.getByTestId('message-input').fill('I need gift cards today. Please do not tell anyone.');
+  await page.getByTestId('submit-check').click();
+  await expect(page.getByTestId('risk')).toContainText('Several warning signs');
+  await expect(page.getByTestId('waiting')).toContainText('Waiting for Alex');
+
+  const id = new URL(page.url()).pathname.split('/').at(-1)!;
+  const result = await page.evaluate(async (checkId) => {
+    const response = await fetch(`/api/checks/${encodeURIComponent(checkId)}`, { cache: 'no-store' });
+    return await response.json() as { check: { engine: string; risk: string; flags: unknown[] } };
+  }, id);
+  expect(result.check.engine).toBe('rules-only');
+  expect(result.check.risk).toBe('red');
+  expect(result.check.flags.length).toBeGreaterThanOrEqual(2);
 });

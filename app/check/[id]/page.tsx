@@ -1,36 +1,83 @@
 'use client';
+
 import { use, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { findCheck, pair, riskLabel, type Check } from '@/lib/sample-data';
+import type { Check, Pair } from '@/lib/contracts';
 
-type View = 'auto' | 'scam' | 'safe' | 'fallback';
+type ApiError = { error?: { message?: string; code?: string } };
+const riskLabel = {
+  red: 'Several warning signs',
+  yellow: 'A few warning signs',
+  green: 'No obvious warning signs',
+} as const;
+
+async function readJson<T>(response: Response): Promise<T> {
+  const data = await response.json() as T | ApiError;
+  if (!response.ok) {
+    const error = (data as ApiError).error;
+    throw new Error(error?.message || 'We couldn’t load this check. Please try again.');
+  }
+  return data as T;
+}
 
 export default function Result({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const search = useSearchParams();
-  const [check, setCheck] = useState<Check | null | undefined>(undefined);
+  const alertFailed = search.get('alert') === 'failed';
+  const [check, setCheck] = useState<Check | null>(null);
+  const [pair, setPair] = useState<Pair | null>(null);
+  const [now, setNow] = useState(Date.now());
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    if (id === 'new') {
-      const saved = sessionStorage.getItem('preview-check');
-      if (!saved) return setCheck(null);
-      const p = JSON.parse(saved);
-      setCheck({
-        id: 'new', maskedText: p.maskedText, risk: p.risk, flags: p.flags,
-        summary: p.flags.length ? 'We found warning signs in this message.' : 'No warning signs found, but wait for Alex before acting.',
-        engine: 'rules-only', helperAnswer: 'pending', createdAt: new Date().toISOString(),
+    let active = true;
+    let initialLoaded = false;
+    const checkUrl = `/api/checks/${encodeURIComponent(id)}`;
+    const refreshCheck = async () => {
+      try {
+        const response = await fetch(checkUrl, { credentials: 'same-origin', cache: 'no-store' });
+        const result = await readJson<{ check: Check }>(response);
+        if (active) setCheck(result.check);
+      } catch (loadError) {
+        if (active && !initialLoaded) setError(loadError instanceof Error ? loadError.message : 'We couldn’t load this check.');
+      }
+    };
+
+    Promise.all([
+      fetch(checkUrl, { credentials: 'same-origin', cache: 'no-store' }).then((response) => readJson<{ check: Check }>(response)),
+      fetch('/api/pair', { credentials: 'same-origin', cache: 'no-store' }).then((response) => readJson<{ pair: Pair }>(response)),
+    ])
+      .then(([checkResult, pairResult]) => {
+        if (!active) return;
+        initialLoaded = true;
+        setCheck(checkResult.check);
+        setPair(pairResult.pair);
+        setLoading(false);
+      })
+      .catch((loadError: unknown) => {
+        if (!active) return;
+        setError(loadError instanceof Error ? loadError.message : 'We couldn’t load this check.');
+        setLoading(false);
       });
-    } else {
-      setCheck(findCheck(id) ?? null);
-    }
+
+    const poll = window.setInterval(() => { void refreshCheck(); }, 3000);
+    const clock = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => {
+      active = false;
+      window.clearInterval(poll);
+      window.clearInterval(clock);
+    };
   }, [id]);
 
-  if (check === undefined) return <main><p>Loading…</p></main>;
-  if (check === null) return <main><h1>We couldn&apos;t find that check.</h1><a href="/" className="btn">Go home</a></main>;
+  if (loading) return <main><p role="status">Loading your check…</p></main>;
+  if (error || !check || !pair) {
+    return <main><h1>We couldn&apos;t load this check.</h1><p className="muted" role="alert">{error || 'Please sign in and open your check again.'}</p><a href="/setup" className="btn">Sign in</a></main>;
+  }
 
-  const view = (search.get('view') as View) || 'auto';
-  const answer = view === 'scam' || view === 'safe' ? view : check.helperAnswer;
-  const showFallback = view === 'fallback' && answer === 'pending';
+  const answer = check.helperAnswer;
+  const ageMs = Math.max(0, now - Date.parse(check.createdAt));
+  const showFallback = answer === 'pending' && (alertFailed || ageMs >= 10 * 60 * 1000);
 
   return (
     <main>
@@ -75,34 +122,29 @@ export default function Result({ params }: { params: Promise<{ id: string }> }) 
       )}
 
       <h2>The message</h2>
-      <p className="message">{check.maskedText}</p>
-      {check.maskedText.includes('****') && (
+      {check.textClearedAt ? (
+        <p className="message" data-testid="text-cleared">This message was cleared after 30 days.</p>
+      ) : (
+        <p className="message" data-testid="checked-message">{check.maskedText}</p>
+      )}
+      {!check.textClearedAt && check.maskedText?.includes('****') && (
         <p className="masked-note" data-testid="masked-note">🔒 We hid card and account numbers before saving this message.</p>
       )}
 
       {check.flags.length > 0 && (
         <section aria-labelledby="flags">
           <h2 id="flags">What we noticed</h2>
-          {check.flags.map((f, i) => (
-            <div className="flag" key={i} data-testid="flag">
-              <strong>{f.type}</strong>
-              <q>{f.quote}</q>
-              <p>{f.explanation}</p>
+          {check.flags.map((flag, index) => (
+            <div className={`flag ${flag.source}`} key={`${flag.type}-${index}`} data-testid="flag">
+              <strong>{flag.type.replaceAll('_', ' ')}</strong>
+              {flag.quote && <q>{flag.quote}</q>}
+              {flag.explain && <p>{flag.explain}</p>}
             </div>
           ))}
         </section>
       )}
 
       <a href="/" className="btn secondary">Done</a>
-
-      <div className="preview-tools">
-        Preview only, to see each state:{' '}
-        <a href="?view=auto">Waiting</a>
-        <a href="?view=scam">Alex says Scam</a>
-        <a href="?view=safe">Alex says All good</a>
-        <a href="?view=fallback">After 10 minutes</a>
-        <a href="/check/c4">Card number check (**** 1111)</a>
-      </div>
     </main>
   );
 }

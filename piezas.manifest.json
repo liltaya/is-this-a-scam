@@ -116,13 +116,26 @@
   },
   "publicRoutes": [],
   "deploy": {
-    "requiredEnv": ["PIEZAS_API_KEY", "PIEZAS_API_URL", "RETENTION_SECRET"],
-    "optionalEnv": ["PIEZAS_APP_URL", "PIEZAS_USERS_URL", "ANTHROPIC_API_KEY", "PIEZAS_HOOK_STATE_DIR"]
+    "requiredEnv": [
+      "PIEZAS_API_KEY",
+      "PIEZAS_API_URL",
+      "RETENTION_SECRET"
+    ],
+    "optionalEnv": [
+      "PIEZAS_APP_URL",
+      "PIEZAS_USERS_URL",
+      "ANTHROPIC_API_KEY",
+      "PIEZAS_HOOK_STATE_DIR"
+    ]
   },
   "recipes": [],
   "notes": [
     "Future recipes should extend this manifest instead of replacing it.",
     "Run `npx piezas doctor` after AI-generated changes."
   ],
-  "rules": "short"
+  "rules": "short",
+  "testApp": {
+    "appId": "9af377c0-ed3a-44fb-8181-e6a8af89e3c4",
+    "appName": "Is This A Scam (test)"
+  }
 }

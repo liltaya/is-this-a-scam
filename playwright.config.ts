@@ -28,7 +28,11 @@ export default defineConfig({
         port,
         reuseExistingServer: false,
         timeout: 120_000,
-        env: { PIEZAS_API_KEY: process.env.PIEZAS_TEST_API_KEY ?? '' },
+    env: {
+      PIEZAS_API_KEY: process.env.PIEZAS_TEST_API_KEY ?? '',
+      PIEZAS_TEST_RUN: process.env.PIEZAS_TEST_RUN ?? '',
+      RETENTION_SECRET: process.env.RETENTION_SECRET || process.env.PIEZAS_TEST_API_KEY || '',
+    },
       },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
 });
