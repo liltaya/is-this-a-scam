@@ -15,6 +15,17 @@ test("S-006: A check can only be answered once", async ({ page }) => {
   await page.getByTestId('answer-scam').click();
   await expect(page.getByTestId('sent')).toContainText('Sent. Galina sees your answer now.');
 
+  // A second answer, as an older open tab would send it, must be refused by the server.
+  const secondAnswer = await page.evaluate(async (checkId) => {
+    const response = await fetch(`/api/checks/${encodeURIComponent(checkId)}/answer`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ answer: 'safe' }),
+    });
+    return response.status;
+  }, fixture.check!.id);
+  expect(secondAnswer).toBe(409);
+
   await page.goto(`/helper/checks/${encodeURIComponent(fixture.check!.id)}`);
   await expect(page.getByTestId('already-answered')).toContainText('Scam');
   await expect(page.getByTestId('answer-scam')).toHaveCount(0);

@@ -19,6 +19,8 @@ test("S-010: The check still works without the Claude API", async ({ page }) => 
   await expect(page.getByTestId('risk')).toContainText('Looks like a scam');
   await expect(page.getByTestId('waiting')).toContainText('Waiting for Alex');
 
+  await page.waitForURL(/\/check\/[^/?#]+(?:[?#].*)?$/);
+
   const id = new URL(page.url()).pathname.split('/').at(-1)!;
   const result = await page.evaluate(async (checkId) => {
     const response = await fetch(`/api/checks/${encodeURIComponent(checkId)}`, { cache: 'no-store' });
