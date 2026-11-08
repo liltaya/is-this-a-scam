@@ -4,14 +4,18 @@
 //   When Alex tries to answer it again
 //   Then the answer is refused and the check still says "Scam"
 //
-// NOT WRITTEN YET. Replace the test body with the real steps, driven against
-// the running app: open the page (page.goto), do what the When line says
-// (click, fill, ...), and check what the Then line says is visible
-// (await expect(page.getByTestId(...)).toBeVisible() / toHaveText(...)).
-// Keep the first line: it tells Piezas which scenario (and which wording of
-// it) this test checks. Never skip the test or fake Piezas.
-import { test } from '@playwright/test';
+import { expect, test } from '@playwright/test';
+import { createScenarioFixture, signInHelper } from './support';
 
-test("S-006: A check can only be answered once", async () => {
-  throw new Error("PIEZAS_NOT_WRITTEN: S-006 has no test yet");
+test("S-006: A check can only be answered once", async ({ page }) => {
+  const fixture = await createScenarioFixture();
+  await signInHelper(page, fixture);
+  await page.goto(`/helper/checks/${encodeURIComponent(fixture.check!.id)}`);
+  await expect(page.getByTestId('answer-scam')).toBeVisible();
+  await page.getByTestId('answer-scam').click();
+  await expect(page.getByTestId('sent')).toContainText('Sent. Galina sees your answer now.');
+
+  await page.goto(`/helper/checks/${encodeURIComponent(fixture.check!.id)}`);
+  await expect(page.getByTestId('already-answered')).toContainText('Scam');
+  await expect(page.getByTestId('answer-scam')).toHaveCount(0);
 });

@@ -50,10 +50,22 @@ export async function clearIfOverdue(record: EntityRecord): Promise<EntityRecord
 }
 
 /** The nightly job: clears every check older than 30 days that still has its text. */
-export async function runRetention(now = new Date()): Promise<{ cleared: number; failed: number }> {
+export async function runRetention(now = new Date(), onlyCheckId?: string): Promise<{ cleared: number; failed: number }> {
   const { check } = await records();
   let cleared = 0;
   let failed = 0;
+  if (onlyCheckId) {
+    try {
+      const record = await check.get(onlyCheckId);
+      if (record.tags.includes(TEXT_KEPT_TAG) && isPastRetention(record.createdAt, now.getTime())) {
+        await clearCheckText(record, now);
+        cleared = 1;
+      }
+      return { cleared, failed };
+    } catch {
+      return { cleared, failed: 1 };
+    }
+  }
   const PAGE = 100;
   for (;;) {
     // Oldest first, only checks that still have text. Cleared ones drop out of

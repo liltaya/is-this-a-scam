@@ -85,7 +85,7 @@ export default function Result({ params }: { params: Promise<{ id: string }> }) 
         <p className="muted">Don&apos;t reply, click links or pay while you wait.</p>
       </>}
 
-      {check.textClearedAt ? <p className="card">This message was cleared after 30 days.</p> : <>
+      {check.textClearedAt ? <p className="card" data-testid="text-cleared">This message was cleared after 30 days.</p> : <>
         <h2>The message</h2>
         <p className="message" data-testid="masked-text">{message}</p>
         {check.maskedText?.includes('****') && <p className="masked-note" data-testid="masked-note">🔒 We hid card and account numbers before saving this message.</p>}

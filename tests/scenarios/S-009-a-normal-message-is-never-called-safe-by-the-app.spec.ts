@@ -4,14 +4,19 @@
 //   When the result appears and Alex has not answered
 //   Then the screen says "Waiting for Alex" and never "All good" or "safe", even though the risk is green
 //
-// NOT WRITTEN YET. Replace the test body with the real steps, driven against
-// the running app: open the page (page.goto), do what the When line says
-// (click, fill, ...), and check what the Then line says is visible
-// (await expect(page.getByTestId(...)).toBeVisible() / toHaveText(...)).
-// Keep the first line: it tells Piezas which scenario (and which wording of
-// it) this test checks. Never skip the test or fake Piezas.
-import { test } from '@playwright/test';
+import { expect, test } from '@playwright/test';
+import { createScenarioFixture, signInParent } from './support';
 
-test("S-009: A normal message is never called safe by the app", async () => {
-  throw new Error("PIEZAS_NOT_WRITTEN: S-009 has no test yet");
+test("S-009: A normal message is never called safe by the app", async ({ page }) => {
+  const fixture = await createScenarioFixture({ withCheck: false });
+  await signInParent(page, fixture);
+  await page.goto('/');
+  await page.getByTestId('start-check').click();
+  await page.getByTestId('message-input').fill('Kingsway Pharmacy: your prescription is ready for pickup. Questions? Call us at the store.');
+  await page.getByTestId('submit-check').click();
+
+  await expect(page.getByTestId('risk')).toContainText('No obvious warning signs');
+  await expect(page.getByTestId('waiting')).toContainText('Waiting for Alex');
+  await expect(page.getByTestId('helper-answer')).toHaveCount(0);
+  await expect(page.getByText(/All good|safe/i)).toHaveCount(0);
 });

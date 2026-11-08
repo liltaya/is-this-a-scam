@@ -1,6 +1,7 @@
 import { timingSafeEqual } from 'node:crypto';
-import { errorResponse, HttpError } from '@/lib/server/http';
+import { errorResponse, HttpError, notFound } from '@/lib/server/http';
 import { runRetention } from '@/lib/server/retention';
+import { records } from '@/lib/server/piezas';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -20,7 +21,20 @@ function authorized(request: Request): boolean {
 export async function POST(request: Request) {
   try {
     if (!authorized(request)) throw new HttpError(404, 'not_found', 'Not found.');
-    const result = await runRetention();
+    const url = new URL(request.url);
+    const asOfValue = url.searchParams.get('asOf');
+    const onlyCheckId = url.searchParams.get('checkId') || undefined;
+    let asOf = new Date();
+    if (asOfValue || onlyCheckId) {
+      if (process.env.PIEZAS_TEST_RUN !== '1' || process.env.NODE_ENV === 'production' || !asOfValue || !onlyCheckId) {
+        throw notFound();
+      }
+      asOf = new Date(asOfValue);
+      if (!Number.isFinite(asOf.getTime())) throw new HttpError(400, 'invalid_input', 'The clean-up date is not valid.');
+      const { check } = await records();
+      await check.get(onlyCheckId); // Ensure the requested record exists in this test copy.
+    }
+    const result = await runRetention(asOf, onlyCheckId);
     console.log('[retention] done', result);
     // Any check left uncleared is a failure, so the scheduled job turns red.
     return Response.json(result, { status: result.failed ? 500 : 200 });
