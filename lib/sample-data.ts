@@ -1,7 +1,11 @@
 // Made-up records for the design preview only. Real records will live in Piezas.
 export type Risk = 'red' | 'yellow' | 'green';
 export type HelperAnswer = 'pending' | 'scam' | 'safe';
-export type Flag = { type: string; quote: string; explanation: string; source: 'rules' | 'ai' };
+// The fixed flag types from docs/contracts.md.
+export type FlagType =
+  | 'urgency' | 'money' | 'gift_cards' | 'codes'
+  | 'secrecy' | 'impersonation' | 'link' | 'other';
+export type Flag = { type: FlagType; quote: string; explain: string; source: 'rules' | 'ai' };
 export type Check = {
   id: string;
   maskedText: string;
@@ -13,6 +17,18 @@ export type Check = {
   helperNote?: string;
   createdAt: string;
   answeredAt?: string;
+};
+
+// The name shown above each flag, in plain words.
+export const flagLabel: Record<FlagType, string> = {
+  urgency: 'Rush',
+  money: 'Money transfer',
+  gift_cards: 'Gift cards',
+  codes: 'Asks for codes or details',
+  secrecy: 'Secrecy',
+  impersonation: 'Pretends to be someone',
+  link: 'Strange link',
+  other: 'Other warning sign',
 };
 
 export const pair = {
@@ -28,10 +44,10 @@ export const checks: Check[] = [
       "Grandma it's me. I'm in trouble and need $900 in gift cards today. Please don't tell Mom.",
     risk: 'red',
     flags: [
-      { type: 'Gift cards', quote: '$900 in gift cards', explanation: 'Real family and real companies never ask to be paid in gift cards.', source: 'rules' },
-      { type: 'Rush', quote: 'today', explanation: 'Scammers push you to act fast so you have no time to check.', source: 'rules' },
-      { type: 'Secrecy', quote: "Please don't tell Mom", explanation: 'Asking you to keep it secret stops you from checking with family.', source: 'ai' },
-      { type: 'Family emergency', quote: "Grandma it's me. I'm in trouble", explanation: 'A common trick: pretending to be a grandchild in trouble.', source: 'ai' },
+      { type: 'gift_cards', quote: '$900 in gift cards', explain: 'Real family and real companies never ask to be paid in gift cards.', source: 'rules' },
+      { type: 'urgency', quote: 'today', explain: 'Scammers push you to act fast so you have no time to check.', source: 'rules' },
+      { type: 'secrecy', quote: "Please don't tell Mom", explain: 'Asking you to keep it secret stops you from checking with family.', source: 'ai' },
+      { type: 'impersonation', quote: "Grandma it's me. I'm in trouble", explain: 'A common trick: pretending to be a grandchild in trouble.', source: 'ai' },
     ],
     summary: 'This looks like the "grandchild in trouble" scam asking for gift cards.',
     engine: 'rules+ai',
@@ -44,9 +60,9 @@ export const checks: Check[] = [
       'CRA: You have an unclaimed tax refund of $1,280. Confirm your details within 24 hours at cra-refund-secure.info',
     risk: 'red',
     flags: [
-      { type: 'Pretends to be government', quote: 'CRA', explanation: 'The CRA does not send refunds by text with a link.', source: 'rules' },
-      { type: 'Strange link', quote: 'cra-refund-secure.info', explanation: 'This is not a government website. Real CRA sites end in canada.ca.', source: 'ai' },
-      { type: 'Rush', quote: 'within 24 hours', explanation: 'A deadline is meant to scare you into acting quickly.', source: 'rules' },
+      { type: 'impersonation', quote: 'CRA', explain: 'The CRA does not send refunds by text with a link.', source: 'rules' },
+      { type: 'link', quote: 'cra-refund-secure.info', explain: 'This is not a government website. Real CRA sites end in canada.ca.', source: 'ai' },
+      { type: 'urgency', quote: 'within 24 hours', explain: 'A deadline is meant to scare you into acting quickly.', source: 'rules' },
     ],
     summary: 'A fake tax refund text that wants your personal details.',
     engine: 'rules+ai',
@@ -74,9 +90,9 @@ export const checks: Check[] = [
       'Amazon Security: A $649.99 purchase was charged to your card **** 1111. If this was not you, cancel immediately at amzn-refund-help.info',
     risk: 'red',
     flags: [
-      { type: 'Rush', quote: 'immediately', explanation: 'Scammers push you to act fast so you have no time to check.', source: 'rules' },
-      { type: 'Fake company alert', quote: 'Amazon Security', explanation: 'Amazon does not text you a link to cancel a purchase. Check your orders in the Amazon app instead.', source: 'ai' },
-      { type: 'Strange link', quote: 'amzn-refund-help.info', explanation: 'This is not an Amazon website. The link goes to the scammer.', source: 'rules' },
+      { type: 'urgency', quote: 'immediately', explain: 'Scammers push you to act fast so you have no time to check.', source: 'rules' },
+      { type: 'impersonation', quote: 'Amazon Security', explain: 'Amazon does not text you a link to cancel a purchase. Check your orders in the Amazon app instead.', source: 'ai' },
+      { type: 'link', quote: 'amzn-refund-help.info', explain: 'This is not an Amazon website. The link goes to the scammer.', source: 'rules' },
     ],
     summary: 'A fake purchase alert that wants you to open a scam link.',
     engine: 'rules+ai',
