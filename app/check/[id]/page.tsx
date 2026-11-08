@@ -3,6 +3,7 @@
 import { use, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import type { Check, Flag, FlagType, Pair } from '@/lib/contracts';
+import styles from '../parent-experience.module.css';
 
 type ApiError = { error?: { message?: string } };
 const POLL_MS = 3_000;
@@ -68,11 +69,11 @@ export default function Result({ params }: { params: Promise<{ id: string }> }) 
   const message = useMemo(() => check?.maskedText ? highlightedMessage(check.maskedText, check.flags) : null, [check]);
   const helperName = pair?.helperName ?? 'your helper';
 
-  if (loading) return <main><p>Loading…</p></main>;
-  if (error || !check) return <main><h1>Not found</h1><p className="muted">{error || 'This check doesn’t exist or isn’t yours.'}</p><a href="/" className="btn">Go home</a></main>;
+  if (loading) return <main className={styles.parent}><p>Loading…</p></main>;
+  if (error || !check) return <main className={styles.parent}><h1>Not found</h1><p className="muted">{error || 'This check doesn’t exist or isn’t yours.'}</p><a href="/" className="btn">Go home</a></main>;
 
   return (
-    <main>
+    <main className={styles.parent}>
       {check.helperAnswer === 'scam' && <><div className="answer scam" data-testid="helper-answer">Scam.<br />Don&apos;t reply or pay.</div><p className="muted">{helperName} checked it for you.</p></>}
       {check.helperAnswer === 'safe' && <><div className="answer safe" data-testid="helper-answer">All good.</div><p className="muted">{helperName} checked it for you.</p></>}
       {check.helperNote && <p className="note">“{check.helperNote}” — {helperName}</p>}

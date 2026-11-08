@@ -1,0 +1,22 @@
+.parent {
+  font-size: 20px;
+}
+
+.parent :global(.steps),
+.parent :global(.message),
+.parent :global(.masked-note) {
+  font-size: 20px;
+}
+
+.parent :global(label),
+.parent textarea {
+  font-size: 20px;
+}
+
+.parent :global(.btn) {
+  font-size: 32px;
+}
+
+.parent :global(.btn.big) {
+  font-size: 34px;
+}

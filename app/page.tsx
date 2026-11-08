@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import styles from './check/parent-experience.module.css';
 
 type Me = {
   status: 'signed_in';
@@ -24,7 +25,7 @@ export default function Home() {
   const helperName = me?.role === 'parent' ? me.pair?.helperName : undefined;
 
   return (
-    <main>
+    <main className={styles.parent}>
       {parentName && <p className="muted">Hello, {parentName}.</p>}
       <h1>Got a message that worries you?</h1>
       <Link href="/check" className="btn big" data-testid="start-check">

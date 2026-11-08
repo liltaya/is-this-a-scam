@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import styles from './parent-experience.module.css';
 
 type CreateCheckResponse = { check: { id: string }; helperNotified: boolean };
 type ApiError = { error?: { message?: string } };
@@ -40,7 +41,7 @@ export default function PasteMessage() {
   }
 
   return (
-    <main>
+    <main className={styles.parent}>
       <p className="steps">Step 1 of 2</p>
       <h1>Paste the message here</h1>
       <p className="muted">Press and hold in the box, then tap Paste.</p>
