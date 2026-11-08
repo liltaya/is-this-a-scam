@@ -82,6 +82,7 @@ export async function POST(request: Request) {
       // From here on the account exists and was made by this request (it didn't
       // exist a moment ago), so any failure removes it again.
       let parentUserId: string | undefined;
+      let createdPairId: string | undefined;
       try {
         const parent = await findByEmail();
         if (!parent) throw new Error('parent account not found right after it was created');
@@ -91,6 +92,7 @@ export async function POST(request: Request) {
           title: `${parentName} and ${helperName}`,
           data: { parentUserId: parent.id, helperUserId: viewer.userId, parentName, helperName, helperPhone },
         });
+        createdPairId = created.id;
 
         // One helper, one parent. If two requests raced (say on two servers),
         // the oldest pair wins and this one is undone.
@@ -99,6 +101,7 @@ export async function POST(request: Request) {
           const oldest = [...mine].sort((a, b) => a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id))[0];
           if (oldest.id !== created.id) {
             await pair.delete(created.id);
+            createdPairId = undefined;
             throw alreadyPaired();
           }
         }
@@ -106,6 +109,11 @@ export async function POST(request: Request) {
         const status = await statusFor(viewer.token, viewer.userId, viewer.profileRole);
         return withSession(viewer, Response.json({ ...status, pair: toPair(created) }, { status: 201 }));
       } catch (err) {
+        if (createdPairId) {
+          await pair.delete(createdPairId).catch((e: unknown) =>
+            console.error('[setup] could not remove the half-made parent link', { pairId: createdPairId, ...safeErr(e) }),
+          );
+        }
         const id = parentUserId ?? (await findByEmail().catch(() => undefined))?.id;
         if (id) {
           await users.deleteUser(id).catch((e: unknown) =>
