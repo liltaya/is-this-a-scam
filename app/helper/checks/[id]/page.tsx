@@ -1,7 +1,7 @@
 'use client';
 import { use, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { findCheck, pair, riskLabel } from '@/lib/sample-data';
+import { findCheck, flagLabel, pair, riskLabel } from '@/lib/sample-data';
 
 export default function ReviewCheck({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -43,9 +43,9 @@ export default function ReviewCheck({ params }: { params: Promise<{ id: string }
           <h2>What we noticed</h2>
           {check.flags.map((f, i) => (
             <div className={`flag ${f.source}`} key={i}>
-              <strong>{f.type} <span className="muted" style={{ fontWeight: 400, fontSize: 15 }}>({f.source === 'ai' ? 'AI' : 'keyword rule'})</span></strong>
+              <strong>{flagLabel[f.type]} <span className="muted" style={{ fontWeight: 400, fontSize: 15 }}>({f.source === 'ai' ? 'AI' : 'keyword rule'})</span></strong>
               <q>{f.quote}</q>
-              <p>{f.explanation}</p>
+              <p>{f.explain}</p>
             </div>
           ))}
         </>

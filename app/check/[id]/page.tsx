@@ -1,7 +1,7 @@
 'use client';
 import { use, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { findCheck, pair, riskLabel, type Check } from '@/lib/sample-data';
+import { findCheck, flagLabel, pair, riskLabel, type Check } from '@/lib/sample-data';
 
 type View = 'auto' | 'scam' | 'safe' | 'fallback';
 
@@ -85,9 +85,9 @@ export default function Result({ params }: { params: Promise<{ id: string }> }) 
           <h2 id="flags">What we noticed</h2>
           {check.flags.map((f, i) => (
             <div className="flag" key={i} data-testid="flag">
-              <strong>{f.type}</strong>
+              <strong>{flagLabel[f.type]}</strong>
               <q>{f.quote}</q>
-              <p>{f.explanation}</p>
+              <p>{f.explain}</p>
             </div>
           ))}
         </section>
