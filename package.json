@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "test:unit": "node --import ./scripts/ts-paths.mjs --test tests/unit/*.unit.ts"
   },
   "devDependencies": {
     "@playwright/test": "^1.47.0",
