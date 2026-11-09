@@ -15,11 +15,15 @@ Ask permission to use their first name and quote in the pitch. First name only, 
 
 | Teammate | First name (with consent) | Age range | Relation | What happened | Best quote | What would stop them |
 | --- | --- | --- | --- | --- | --- | --- |
-| A | | | | | | |
-| B | | | | | | |
-| C | | | | | | |
-| D | | | | | | |
+| [who spoke to them] | Alex [confirm consent] | [ ] | Adult child; the scam targeted his mother | His mother got a phone call saying he had been in a car accident. | [ask for one, with consent] | [ ] |
+| [who spoke to them] | Maya [confirm consent] | [ ] | Adult child; the scam targeted her mother | Her mother got a text like "Mom, I'm in trouble, send me money" and paid. | [ask for one, with consent] | [ ] |
+| | | | | | | |
+| | | | | | | |
+
+The "What happened" column is a summary of what they told us, not a quote.
 
 ## What we changed because of it
 
-- 
+- Both scams used the child as bait, so the pitch leads with it: "The scam uses the child. Our app asks the real one." The app sends the parent's question to their real adult child, the helper.
+- Alex's mother got a phone call, not a text. The app only checks pasted messages, so phone calls are listed in the pitch under what we still need to learn.
+- The demo helper should not be called Alex, so judges don't mix them up with the Alex we interviewed.
