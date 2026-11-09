@@ -28,6 +28,31 @@ export function trustedAppUrl(request: Request): string | null {
   return /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin) ? origin : null;
 }
 
+const RESEND_GAP_MS = 10 * 60 * 1000;
+const lastVerificationEmail = new Map<string, number>();
+
+/**
+ * Emails a confirmation link, at most once every 10 minutes per address (per
+ * server process). Sign-in used to send a new one on every try while the email
+ * was unconfirmed, so a helper could get several emails with different links.
+ */
+export async function sendVerificationEmail(request: Request, email: string): Promise<void> {
+  const now = Date.now();
+  const last = lastVerificationEmail.get(email);
+  if (last !== undefined && now - last < RESEND_GAP_MS) return;
+  for (const [key, at] of lastVerificationEmail) if (now - at >= RESEND_GAP_MS) lastVerificationEmail.delete(key);
+  lastVerificationEmail.set(email, now);
+  // The link opens our /helper/verify page when the app's address is known.
+  // Otherwise Piezas links to /verify, which forwards there (app/verify).
+  const appUrl = trustedAppUrl(request);
+  try {
+    await piezas().users.requestEmailVerification(email, appUrl ? { returnUrl: `${appUrl}/helper/verify` } : undefined);
+  } catch (err) {
+    lastVerificationEmail.delete(email); // let the next try send it
+    throw err;
+  }
+}
+
 let policyReady: Promise<void> | undefined;
 
 /**

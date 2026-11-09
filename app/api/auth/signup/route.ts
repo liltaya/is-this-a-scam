@@ -1,4 +1,4 @@
-import { ensureAuthPolicy, requireEmail, requireName, requirePassword, trustedAppUrl } from '@/lib/server/auth';
+import { ensureAuthPolicy, requireEmail, requireName, requirePassword, sendVerificationEmail } from '@/lib/server/auth';
 import { assertSameOrigin, HttpError, errorResponse, readJson } from '@/lib/server/http';
 import { piezas } from '@/lib/server/piezas';
 
@@ -29,11 +29,8 @@ export async function POST(request: Request) {
       throw err;
     }
 
-    // The account can't sign in until the email is confirmed. The link opens
-    // our /helper/verify page when the app's address is known, or the Piezas
-    // default page otherwise.
-    const appUrl = trustedAppUrl(request);
-    await users.requestEmailVerification(email, appUrl ? { returnUrl: `${appUrl}/helper/verify` } : undefined);
+    // The account can't sign in until the email is confirmed.
+    await sendVerificationEmail(request, email);
 
     return Response.json({ status: 'verify_email' }, { status: 201 });
   } catch (err) {

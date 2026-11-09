@@ -3,9 +3,9 @@ import {
   ensureAuthPolicy,
   mfaChallengeCookie,
   requireEmail,
+  sendVerificationEmail,
   signInError,
   signedIn,
-  trustedAppUrl,
 } from '@/lib/server/auth';
 import { assertSameOrigin, HttpError, errorResponse, readJson } from '@/lib/server/http';
 import { piezas } from '@/lib/server/piezas';
@@ -30,11 +30,11 @@ export async function POST(request: Request) {
       result = await users.signIn({ email, password });
     } catch (err) {
       if ((err as { code?: string })?.code === 'account_pending') {
-        // Send a fresh confirmation link so the helper isn't stuck.
-        const appUrl = trustedAppUrl(request);
-        await users
-          .requestEmailVerification(email, appUrl ? { returnUrl: `${appUrl}/helper/verify` } : undefined)
-          .catch((e: unknown) => console.error('[auth] could not resend verification', (e as { code?: string })?.code));
+        // Send a fresh confirmation link so the helper isn't stuck, but not on
+        // every try: at most once every 10 minutes (see sendVerificationEmail).
+        await sendVerificationEmail(request, email).catch((e: unknown) =>
+          console.error('[auth] could not resend verification', (e as { code?: string })?.code),
+        );
       }
       signInError(err);
     }
