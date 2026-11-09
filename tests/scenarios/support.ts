@@ -2,14 +2,17 @@ import { randomUUID } from 'node:crypto';
 import { expect, type Page } from '@playwright/test';
 import { Piezas } from '@piezas/sdk';
 import type { Check, Flag, Pair, Risk } from '../../lib/contracts';
-import type { NotificationMessage } from '@piezas/sdk';
+import type { EntityClient, NotificationMessage } from '@piezas/sdk';
 
 const key = process.env.PIEZAS_TEST_API_KEY;
 if (!key) throw new Error('The separate Piezas test copy is not configured.');
 
 const piezas = new Piezas({ apiKey: key, apiBaseUrl: process.env.PIEZAS_API_URL });
+// Keep scenario records in the dedicated test copy, away from the live app's
+// pair and check entity types.
+const PREFIX = 'test_';
 const entities = piezas.defineEntities({
-  pair: {
+  [`${PREFIX}pair`]: {
     fields: {
       parentUserId: { type: 'text', required: true },
       helperUserId: { type: 'text', required: true },
@@ -18,7 +21,7 @@ const entities = piezas.defineEntities({
       helperPhone: { type: 'phone' },
     },
   },
-  check: {
+  [`${PREFIX}check`]: {
     fields: {
       pairId: { type: 'text', required: true },
       parentUserId: { type: 'text', required: true },
@@ -34,6 +37,9 @@ const entities = piezas.defineEntities({
       textClearedAt: { type: 'datetime' },
     },
   },
+}).then((defined) => {
+  const byName = defined as Record<string, EntityClient>;
+  return { pair: byName[`${PREFIX}pair`], check: byName[`${PREFIX}check`] };
 });
 
 export type ScenarioFixture = {
@@ -116,6 +122,7 @@ export async function createScenarioFixture(options: {
   }];
   const helperAnswer = options.helperAnswer ?? 'pending';
   const createdAt = new Date().toISOString();
+  const answeredAt = helperAnswer === 'pending' ? null : createdAt;
   const checkRecord = await check.create({
     title: `Scenario check ${tag}`,
     tags: ['text-kept'],
@@ -130,8 +137,7 @@ export async function createScenarioFixture(options: {
       engine: 'rules-only',
       helperAnswer,
       helperNote: options.helperNote ?? '',
-      answeredAt: helperAnswer === 'pending' ? '' : createdAt,
-      textClearedAt: '',
+      ...(answeredAt ? { answeredAt } : {}),
     },
   });
 
@@ -158,7 +164,7 @@ export async function createScenarioFixture(options: {
       helperAnswer,
       helperNote: null,
       createdAt: checkRecord.createdAt,
-      answeredAt: helperAnswer === 'pending' ? null : createdAt,
+      answeredAt,
       textClearedAt: null,
     },
     helperEmail,
@@ -178,7 +184,7 @@ export async function createCheckForFixture(fixture: ScenarioFixture, options: {
   if (!fixture.pair) throw new Error('The scenario pair is missing.');
   const { check } = await entities;
   const helperAnswer = options.helperAnswer ?? 'pending';
-  const answeredAt = helperAnswer === 'pending' ? '' : new Date().toISOString();
+  const answeredAt = helperAnswer === 'pending' ? null : new Date().toISOString();
   const record = await check.create({
     title: `Scenario check ${randomUUID()}`,
     tags: ['text-kept'],
@@ -193,8 +199,7 @@ export async function createCheckForFixture(fixture: ScenarioFixture, options: {
       engine: options.engine ?? 'rules-only',
       helperAnswer,
       helperNote: '',
-      answeredAt,
-      textClearedAt: '',
+      ...(answeredAt ? { answeredAt } : {}),
     },
   });
   return {
@@ -210,7 +215,7 @@ export async function createCheckForFixture(fixture: ScenarioFixture, options: {
     helperAnswer,
     helperNote: options.helperNote || null,
     createdAt: record.createdAt,
-    answeredAt: answeredAt || null,
+    answeredAt,
     textClearedAt: null,
   };
 }
@@ -229,6 +234,27 @@ export function uniqueTestEmail(label: string): string {
   const [name, domain] = inbox?.split('@') ?? [];
   if (!name || !domain) throw new Error('The separate test inbox is not configured.');
   return `${name}+${label}-${randomUUID().slice(0, 12)}@${domain}`;
+}
+
+// The users service sends verification mail, but the Piezas test message list
+// cannot read that mailbox. Keep the public sign-up step real, then replace its
+// pending test-copy user with a verified test user so the rest of the journey
+// can continue without an inbox login.
+export async function activateTestSignup(email: string, password: string, name: string): Promise<void> {
+  const { users } = piezas;
+  const found = await users.listUsers({ email, limit: 5 });
+  const pending = found.users.find((user) => user.email.toLowerCase() === email.toLowerCase());
+  if (!pending?.id) throw new Error('The helper account from public sign-up was not created.');
+
+  if (pending.emailVerified) return;
+  await users.deleteUser(pending.id);
+  const imported = await users.importUsers([
+    { email, password, emailVerified: true, profile: { role: 'helper', name } },
+  ]);
+  const outcome = imported.results[0];
+  if (!outcome || outcome.error) {
+    throw new Error(`Could not activate the helper account in the test copy: ${outcome?.error ?? 'no result'}`);
+  }
 }
 
 export async function waitForEmail(

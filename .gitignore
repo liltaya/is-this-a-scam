@@ -3,6 +3,7 @@
 
 node_modules/
 .next/
+.next-test*/
 .env*
 !.env.example
 .piezas/dev.log

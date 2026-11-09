@@ -17,13 +17,19 @@ export function piezas(): Piezas {
 type Records = { pair: EntityClient; check: EntityClient };
 let ready: Promise<Records> | undefined;
 
+// The scenario test server sets PIEZAS_RECORD_PREFIX=test_ so its entity types
+// stay separate from the live app's pair and check types.
+const PREFIX = /^[a-z_]{0,12}$/.test(process.env.PIEZAS_RECORD_PREFIX ?? '')
+  ? process.env.PIEZAS_RECORD_PREFIX ?? ''
+  : '';
+
 // Defines the record types and the email template once per process.
 export function records(): Promise<Records> {
   if (!ready) {
     ready = (async () => {
       const p = piezas();
       const defined = await p.defineEntities({
-        pair: {
+        [`${PREFIX}pair`]: {
           fields: {
             parentUserId: { type: 'text', required: true },
             helperUserId: { type: 'text', required: true },
@@ -32,7 +38,7 @@ export function records(): Promise<Records> {
             helperPhone: { type: 'phone' },
           },
         },
-        check: {
+        [`${PREFIX}check`]: {
           fields: {
             pairId: { type: 'text', required: true },
             parentUserId: { type: 'text', required: true },
@@ -51,7 +57,8 @@ export function records(): Promise<Records> {
         },
       });
       await p.defineTemplates({ check_alert: CHECK_ALERT_TEMPLATE });
-      return defined as Records;
+      const byName = defined as Record<string, EntityClient>;
+      return { pair: byName[`${PREFIX}pair`], check: byName[`${PREFIX}check`] };
     })().catch((err) => {
       ready = undefined; // let the next request try again
       throw err;

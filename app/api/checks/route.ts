@@ -42,7 +42,9 @@ export async function POST(request: Request) {
     if (mine.role !== 'parent') throw new HttpError(403, 'not_allowed', 'Only the parent can check a message.');
 
     // Raw text goes only into analyze(); everything stored below is masked.
-    const result = await analyze({ text });
+    const simulateClaudeUnavailable = process.env.PIEZAS_TEST_RUN === '1'
+      && process.env.PIEZAS_TEST_CLAUDE_UNAVAILABLE === '1';
+    const result = await analyze({ text }, { simulateClaudeUnavailable });
     const clean = sanitize(result.maskedText, result.flags, result.risk, result.summary);
 
     const { check } = await records();
@@ -60,27 +62,23 @@ export async function POST(request: Request) {
         engine: result.engine === 'rules+ai' ? 'rules+ai' : 'rules-only',
         helperAnswer: 'pending',
         helperNote: '',
-        answeredAt: '',
-        textClearedAt: '',
       },
     });
     const created = toCheck(record);
 
-    // The check is saved either way; a failed email must not lose it. Try twice,
-    // then tell the screen (helperNotified: false) so it can show the call button
-    // straight away, and note it on the check's timeline.
+    // The check is saved either way. Do not retry an email whose delivery is
+    // uncertain: the provider may have sent it before the connection failed.
+    // The screen offers the parent a call option when delivery cannot be confirmed.
     let helperNotified = false;
-    for (let attempt = 1; attempt <= 2 && !helperNotified; attempt++) {
-      try {
-        await sendCheckAlert(request, mine.pair, created);
-        helperNotified = true;
-      } catch (err) {
-        console.error(`[checks] helper email failed (attempt ${attempt})`, created.id, safeErr(err));
-      }
+    try {
+      await sendCheckAlert(request, mine.pair, created);
+      helperNotified = true;
+    } catch (err) {
+      console.error('[checks] helper email delivery could not be confirmed', created.id, safeErr(err));
     }
     if (!helperNotified) {
       await check
-        .logActivity(created.id, { type: 'note', content: { text: 'Helper alert email could not be sent.' } })
+        .logActivity(created.id, { type: 'note', content: { text: 'Helper alert delivery could not be confirmed.' } })
         .catch((err: unknown) => console.error('[checks] could not log email failure', created.id, safeErr(err)));
     }
 

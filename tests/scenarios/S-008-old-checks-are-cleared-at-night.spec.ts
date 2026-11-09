@@ -24,7 +24,7 @@ test("S-008: Old checks are cleared at night", async ({ page }) => {
     `/api/jobs/retention?asOf=${encodeURIComponent(futureDate)}&checkId=${encodeURIComponent(fixture.check!.id)}`,
     { headers: { Authorization: `Bearer ${process.env.PIEZAS_TEST_API_KEY}` } },
   );
-  expect(cleanup.ok()).toBeTruthy();
+  expect(cleanup.status()).toBe(200);
   expect((await cleanup.json() as { cleared: number }).cleared).toBe(1);
 
   await page.goto(`/check/${encodeURIComponent(fixture.check!.id)}`);
@@ -48,7 +48,7 @@ test("S-008: Old checks are cleared at night", async ({ page }) => {
   expect(after.check.flags[0]).toMatchObject({ type: 'gift_cards', quote: '', explain: '' });
   expect(after.check.summary).toBe('');
   expect(after.check.helperNote).toBeNull();
-  expect(after.check.textClearedAt).toBeTruthy();
+  expect(after.check.textClearedAt).toBe(futureDate);
   expect(after.check.risk).toBe('red');
   expect(after.check.helperAnswer).toBe('scam');
   expect(after.check.createdAt).toBe(before.check.createdAt);

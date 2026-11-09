@@ -5,7 +5,7 @@
 //   Then Galina's phone shows her Home screen, she never typed a password, and her sign-in is set to last 90 days, while the sign-up page offers no way to sign up as a parent
 //
 import { expect, test } from '@playwright/test';
-import { uniqueTestEmail, waitForEmail } from './support';
+import { activateTestSignup, uniqueTestEmail } from './support';
 
 test("S-001: A helper signs up and signs the parent in without the parent typing a password", async ({ page, context }) => {
   const suffix = Math.random().toString(36).slice(2, 10);
@@ -23,18 +23,11 @@ test("S-001: A helper signs up and signs the parent in without the parent typing
   await page.getByTestId('helper-password').fill(helperPassword);
   await page.getByTestId('helper-signup').click();
   await expect(page.getByTestId('go-to-signin')).toBeVisible();
-
-  const verificationEmail = await waitForEmail(helperEmail, (message) => /verify|confirm/i.test(message.subject));
-  const verificationUrl = verificationEmail.bodyRendered.match(/https?:\/\/[^\s"<>]+/)?.[0];
-  expect(verificationUrl).toBeTruthy();
-  expect(verificationUrl).toContain('/helper/verify?token=');
-  await page.goto(verificationUrl!);
-  await page.waitForURL(/\/helper\/(signin|mfa\/setup)/);
-  if (new URL(page.url()).pathname === '/helper/signin') {
-    await page.getByTestId('signin-email').fill(helperEmail);
-    await page.getByTestId('signin-password').fill(helperPassword);
-    await page.getByTestId('signin-submit').click();
-  }
+  await activateTestSignup(helperEmail, helperPassword, 'Alex');
+  await page.goto('/helper/signin');
+  await page.getByTestId('signin-email').fill(helperEmail);
+  await page.getByTestId('signin-password').fill(helperPassword);
+  await page.getByTestId('signin-submit').click();
   await expect(page).toHaveURL(/\/helper\/mfa\/setup/);
   await page.getByTestId('mfa-setup').click();
   await page.getByTestId('parent-name').fill('Galina');

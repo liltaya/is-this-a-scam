@@ -12,7 +12,8 @@ const port = Number(process.env.PIEZAS_TEST_PORT || 3100);
 export default defineConfig({
   testDir: './tests',
   outputDir: './.piezas/test-results/raw',
-  fullyParallel: true,
+  fullyParallel: false,
+  workers: 1,
   forbidOnly: true,
   retries: 1,
   reporter: 'list',
@@ -31,6 +32,8 @@ export default defineConfig({
     env: {
       PIEZAS_API_KEY: process.env.PIEZAS_TEST_API_KEY ?? '',
       PIEZAS_TEST_RUN: process.env.PIEZAS_TEST_RUN ?? '',
+      PIEZAS_TEST_CLAUDE_UNAVAILABLE: '1',
+      PIEZAS_RECORD_PREFIX: 'test_',
       RETENTION_SECRET: process.env.RETENTION_SECRET || process.env.PIEZAS_TEST_API_KEY || '',
     },
       },
