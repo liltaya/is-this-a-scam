@@ -66,7 +66,7 @@ export async function POST(request: Request) {
         );
       if (await findByEmail()) throw emailTaken();
 
-      await ensureAuthPolicy(request);
+      await ensureAuthPolicy();
       // Created already confirmed: the parent can't open a verification email,
       // and the helper is vouching for the address.
       const imported = await users.importUsers([

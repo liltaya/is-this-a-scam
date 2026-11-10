@@ -15,7 +15,7 @@ export async function POST(request: Request) {
     const email = requireEmail(body.email);
     const password = requirePassword(body.password);
 
-    await ensureAuthPolicy(request);
+    await ensureAuthPolicy();
     const users = piezas().users;
     try {
       await users.signUp({ email, password, profile: { role: 'helper', name } });
@@ -30,7 +30,7 @@ export async function POST(request: Request) {
     }
 
     // The account can't sign in until the email is confirmed.
-    await sendVerificationEmail(request, email);
+    await sendVerificationEmail(email);
 
     return Response.json({ status: 'verify_email' }, { status: 201 });
   } catch (err) {

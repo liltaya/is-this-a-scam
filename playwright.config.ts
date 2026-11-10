@@ -33,6 +33,9 @@ export default defineConfig({
       PIEZAS_TEST_RUN: process.env.PIEZAS_TEST_RUN || '1',
       // Separate record type names on the test copy, so they never clash with the live app's.
       PIEZAS_RECORD_PREFIX: 'test_',
+      // The test copy's own address, so its confirmation links open this
+      // server. The app never takes this from a request (lib/server/auth.ts).
+      PIEZAS_APP_URL: `http://localhost:${port}`,
       RETENTION_SECRET: process.env.RETENTION_SECRET || process.env.PIEZAS_TEST_API_KEY || '',
     },
       },

@@ -108,7 +108,7 @@ Speaker note: this is a made-up example from our test set, not a real case. If t
 - Claude Haiku 5.5, the app's model: all 20 scams red, no normal message red (8 green, 2 yellow).
 - Claude Sonnet 5.5, compared: all 20 scams red, no normal message red (7 green, 3 yellow).
 - The keyword rules alone left 6 scams at yellow. Claude raised them to red. The AI can only raise a risk, never lower it.
-- Automated scenario tests: 9 of 10 pass. The 10th (S-001) needs a real email inbox for its sign-up step.
+- Automated scenario tests: 8 of 10 pass. S-001 needs a real email inbox for its sign-up step. S-008 runs the nightly clean-up by hand instead of waiting for 3 a.m., so the test record counts it as not written.
 - Full results: docs/model-comparison.md.
 
 Speaker note: the test messages are made up. Say so.
