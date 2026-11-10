@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     const password = typeof body.password === 'string' ? body.password : '';
     if (!password) throw new HttpError(400, 'invalid_input', 'Please enter the password.');
 
-    await ensureAuthPolicy(request);
+    await ensureAuthPolicy();
     const users = piezas().users;
     let result;
     try {
@@ -32,7 +32,7 @@ export async function POST(request: Request) {
       if ((err as { code?: string })?.code === 'account_pending') {
         // Send a fresh confirmation link so the helper isn't stuck, but not on
         // every try: at most once every 10 minutes (see sendVerificationEmail).
-        await sendVerificationEmail(request, email).catch((e: unknown) =>
+        await sendVerificationEmail(email).catch((e: unknown) =>
           console.error('[auth] could not resend verification', (e as { code?: string })?.code),
         );
       }

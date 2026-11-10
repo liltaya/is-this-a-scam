@@ -17,15 +17,18 @@ const MFA_MAX_AGE = 10 * 60;
 const errCode = (err: unknown) => (err as { code?: string })?.code;
 
 /**
- * The app's public address, trusted only when it comes from settings (or is
- * localhost in development). Used for links in emails, never taken from a
- * request header someone could fake.
+ * The app's public address, trusted only when it comes from settings
+ * (PIEZAS_APP_URL): used for the confirmation link and as the sign-in rules'
+ * allowed origin. Never taken from the request, even on localhost: a request
+ * header can be faked, and a teammate running the live key on their laptop
+ * would otherwise point the live app's allowed origin at their machine, after
+ * which no helper on the live site gets a confirmation email. Without the
+ * setting, Piezas's own link is used; it opens /verify, which forwards to
+ * /helper/verify. The test copy sets it to its own address (playwright.config.ts).
  */
-export function trustedAppUrl(request: Request): string | null {
+export function trustedAppUrl(): string | null {
   const set = process.env.PIEZAS_APP_URL;
-  if (set) return set.replace(/\/$/, '');
-  const origin = new URL(request.url).origin;
-  return /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin) ? origin : null;
+  return set ? set.replace(/\/$/, '') : null;
 }
 
 const RESEND_GAP_MS = 10 * 60 * 1000;
@@ -36,7 +39,7 @@ const lastVerificationEmail = new Map<string, number>();
  * server process). Sign-in used to send a new one on every try while the email
  * was unconfirmed, so a helper could get several emails with different links.
  */
-export async function sendVerificationEmail(request: Request, email: string): Promise<void> {
+export async function sendVerificationEmail(email: string): Promise<void> {
   const now = Date.now();
   const last = lastVerificationEmail.get(email);
   if (last !== undefined && now - last < RESEND_GAP_MS) return;
@@ -44,7 +47,7 @@ export async function sendVerificationEmail(request: Request, email: string): Pr
   lastVerificationEmail.set(email, now);
   // The link opens our /helper/verify page when the app's address is known.
   // Otherwise Piezas links to /verify, which forwards there (app/verify).
-  const appUrl = trustedAppUrl(request);
+  const appUrl = trustedAppUrl();
   try {
     await piezas().users.requestEmailVerification(email, appUrl ? { returnUrl: `${appUrl}/helper/verify` } : undefined);
   } catch (err) {
@@ -60,11 +63,11 @@ let policyReady: Promise<void> | undefined;
  * helpers verify their email, sessions last 90 days (R-005), passwords are at
  * least 12 characters, and accounts with MFA get a second step.
  */
-export function ensureAuthPolicy(request: Request): Promise<void> {
+export function ensureAuthPolicy(): Promise<void> {
   if (!policyReady) {
     policyReady = (async () => {
       const users = piezas().users;
-      const appUrl = trustedAppUrl(request);
+      const appUrl = trustedAppUrl();
       const base = {
         requireEmailVerification: true,
         passwordMinLength: MIN_PASSWORD,
