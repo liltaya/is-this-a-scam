@@ -28,6 +28,23 @@ describe('the "family member in trouble" scam, without gift cards or "today"', (
   });
 });
 
+describe('a new phone number', () => {
+  it('is flagged when the message is written to a parent or grandparent', () => {
+    assert.notEqual(check('Hi Mom, this is my new number, save it').risk, 'green');
+    assert.notEqual(check('This is my new number, Grandma. Text me here.').risk, 'green');
+    // One warning sign, not two: a lost phone and a new number are the same story.
+    assert.equal(check('Hi Mom, I lost my phone, this is my new number.').risk, 'yellow');
+  });
+
+  it('is ordinary news from a clinic, a pharmacy or a friend', () => {
+    assert.equal(check('Lakeside Clinic has moved. Our new phone number is 604 555 0188.').risk, 'green');
+    assert.equal(check('Hi Jean, it is Carol from church. This is my new number.').risk, 'green');
+    const r = check('Your pharmacy has a new phone number. Call us today to confirm your refill.');
+    assert.notEqual(r.risk, 'red');
+    assert.ok(!r.flags.some((f) => f.type === 'impersonation'));
+  });
+});
+
 describe('normal messages', () => {
   it('none of the 10 normal test messages is red from the keyword rules', () => {
     for (const m of TEST_MESSAGES.filter((t) => t.kind === 'normal')) {
