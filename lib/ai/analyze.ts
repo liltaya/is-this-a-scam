@@ -19,7 +19,8 @@ const TIMEOUT_MS = 8000;
 const MAX_FLAGS = 4;
 const FLAG_TYPES: FlagType[] = ['urgency', 'money', 'gift_cards', 'codes', 'secrecy', 'impersonation', 'link', 'other'];
 
-const SYSTEM_PROMPT = `You check a suspicious message for an older adult. Card and account numbers in the message are already masked.
+const SYSTEM_PROMPT = `You check a suspicious message for an older adult. Numbers in the message are already hidden as ****: a hidden number can be an amount of money, a phone number, a card or account number, or a code.
+Someone who says they are the reader's child or grandchild, in trouble, and asks for money or a payment is a common scam.
 Reply with JSON only, no other text:
 {"risk": "red" | "yellow" | "green", "summary": "...", "flags": [{"type": "...", "quote": "...", "explain": "..."}]}
 - risk: red for a likely scam, yellow for some warning signs, green for none.
@@ -55,6 +56,8 @@ export async function analyzeWithModel(text: string, model: string, useAi = true
 
     const seen = new Set(rules.flags.map((f) => f.quote.toLowerCase()));
     const extra = ai.flags.filter((f) => !seen.has(f.quote.toLowerCase()));
+    // Keep room for one of Claude's own flags, so the parent also sees what Claude noticed.
+    const ruleSlots = extra.length > 0 ? MAX_FLAGS - 1 : MAX_FLAGS;
     // Claude can raise the risk the rules found, never lower it. A message the rules flagged stays flagged.
     const risk = higherRisk(rules.risk, ai.risk);
     // The app never calls a message safe on its own, so a green summary must not say "safe".
@@ -63,7 +66,7 @@ export async function analyzeWithModel(text: string, model: string, useAi = true
     return {
       maskedText,
       risk,
-      flags: [...rules.flags, ...extra].slice(0, MAX_FLAGS),
+      flags: [...rules.flags.slice(0, ruleSlots), ...extra].slice(0, MAX_FLAGS),
       summary: useAiSummary ? ai.summary : rulesSummary(risk),
       engine: 'rules+ai',
     };
