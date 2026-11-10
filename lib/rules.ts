@@ -1,5 +1,8 @@
 import type { Flag, FlagType, Risk } from './sample-data';
 
+// How a child or grandchild would address the reader.
+const FAMILY = 'mom|mum|mommy|mummy|mama|mother|dad|daddy|papa|father|grandma|grandpa|granny|grandmother|grandfather|nana|nan|gran';
+
 const RULES: { type: FlagType; pattern: RegExp; explain: string }[] = [
   { type: 'gift_cards', pattern: /gift ?cards?/i, explain: 'Real family and real companies never ask to be paid in gift cards.' },
   { type: 'urgency', pattern: /\b(today|tonight|right now|right away|immediately|urgent|within \d+ (hours?|days?))\b/i, explain: 'Scammers push you to act fast so you have no time to check.' },
@@ -10,11 +13,23 @@ const RULES: { type: FlagType; pattern: RegExp; explain: string }[] = [
   { type: 'money', pattern: /\b(wire|bitcoin|crypto|e-?transfer|western union|moneygram)\b|\b(processing|customs|redelivery|release) fee\b/i, explain: 'Being asked to send money this way, or to pay a fee first, is a common scam sign.' },
   { type: 'other', pattern: /\b(virus|malware|infected|hacked)\b/i, explain: 'Real companies do not warn you about viruses by text. Fake warnings are used to get you to call a scammer.' },
   // The "family member in trouble" scam, even without any of the words above (no gift cards, no "today").
+  // "This is my new number" counts only when the message is written to a parent or grandparent:
+  // a clinic, a pharmacy or a friend with a new phone number is ordinary news.
   {
     type: 'impersonation',
-    pattern:
-      /\b(i'?m|i am) in (big |real |serious |a lot of )?trouble\b|\b(i'?m|i am) (in jail|in the hospital|in hospital|at the police station)\b|\b(i was|i'?ve been|i got) (arrested|in an? (car )?accident)\b|\bbail money\b|\bnew (phone )?number\b|\b(lost|broke) my phone\b/i,
-    explain: 'Scammers often pretend to be a son, daughter or grandchild in trouble. Call them on the number you already have before you do anything.',
+    pattern: new RegExp(
+      [
+        String.raw`\b(i'?m|i am) in (big |real |serious |a lot of )?trouble\b`,
+        String.raw`\b(i'?m|i am) (in jail|in the hospital|in hospital|at the police station)\b`,
+        String.raw`\b(i was|i'?ve been|i got) (arrested|in an? (car )?accident)\b`,
+        String.raw`\bbail money\b`,
+        String.raw`\b(lost|broke) my phone\b`,
+        String.raw`\bmy new (phone )?number\b(?:(?<=\b(?:${FAMILY})\b[\s\S]*)|(?=[\s\S]*\b(?:${FAMILY})\b))`,
+      ].join('|'),
+      'i',
+    ),
+    explain:
+      'Scammers often pretend to be a son, daughter or grandchild in trouble. Call them on the number you already have before you do anything.',
   },
   // A plain request for money. Amounts without a $ are hidden as **** by mask.ts, so **** counts too.
   {
